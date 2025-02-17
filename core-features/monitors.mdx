@@ -1,0 +1,86 @@
+---
+title: "Monitors"
+sidebarTitle : "Overview"
+description: "Monitoring all of your infrastructure in one place would not be complete without the ability to know when critical changes are occurring."
+---
+
+## Overview
+
+Bronto gives you the ability to create monitors that actively run searches across your data and notify your teams via email or custom webhooks.
+
+## Create Monitors
+
+To create monitors in Bronto:
+
+<Steps>
+<Step>
+ Navigate to **Monitors** > **New Monitor**.
+</Step>
+<Step>
+Select the log or logs that define the monitor's scope.
+</Step>
+<Step>
+Apply a **filter**, search is in simple mode. For search syntax see [here](/core-features/log-search/query-syntax#simple-search-bar-mode).
+</Step>
+<Step>
+Evaluate the query over desired time from the predefined options in **minutes**, **hours** or **days**.
+</Step>
+<Step>
+Set Alert Conditions. Configure monitors to trigger if the query value crosses a threshold.
+</Step>
+<Step>
+Lastly, give the monitor a **name**, **description** , **email address** which can be an existing user or a custom email or select an existing webhook where the notification will be sent to.
+</Step>
+</Steps>
+<Frame>
+<img src="/images/core-features/assets/images/edit-monitor-light-74fa29c1e9a3a396bfd2304d049914e8.png"/>
+</Frame>
+
+## Setting Alert Conditions
+The alert conditions can be configured to trigger if the count of the query reaches a predefind threshold.
+
+* Evaluate the query count over the last: *5 minutes*, *10 minutes*, *30 minutes*, *1 hour*, *2 hours*, *4 hours* or *1 day*. Evaluation is across a rolling time window in groups aligned from midnight.
+* Evaluate if query is *above*, *above or equal to*, *below*, or *below or equal* to the threshold.
+* Trigger if Alert Threshold literal value is matched.
+
+## Configure notifications
+
+Configure your notification messages to include the information you are most interested in and specify which user, email or webhook to send these alerts to.
+
+* Monitor Name.
+* Monitor Description.
+* View a preview of what the notification will look like.
+
+## Manage Monitors
+
+Manage Monitors by editing, creating, bulk deleting and searching monitors all in the same place. From here you can easily view what email or webhook is associated to each monitor.
+
+<Frame>
+<img src="/images/core-features/assets/images/manage-monitors-light-2dd1553b2020d34a5cb8daa1c166482d.png"/>
+</Frame>
+
+## View Montior Details & Status
+
+Selecting a monitor to review from your list allows you to see its details which include its filter, source and recipients. From this page you can also view the status and event history
+<Frame>
+<img src="/images/core-features/assets/images/view-monitor-light-85604ebcf70dd2fc0eabe3f21c4c30ad.png"/>
+</Frame>
+
+## Custom Webhooks
+
+Easily connect to internal or external services, like Slack, by creating customizable webhook notifiers.
+
+<Steps>
+<Step>
+ Navigate to Integrations: From the left sidebar, go to **Integrations**.
+</Step>
+<Step>
+ Select **Webhooks** and then choose the **Configure** tab.
+</Step>
+</Steps>
+
+During setup, define the webhook URL, which will receive an HTTP POST request with a content type of `application/json`. You can also add any custom headers that your integration requires.
+
+<Frame>
+<img src="/images/core-features/assets/images/webhooks-light-a9c6c1346fc28049283a5e8c6623c219.png"/>
+</Frame>

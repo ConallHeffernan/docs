@@ -1,0 +1,5484 @@
+openapi: 3.0.2
+info:
+  title: Bronto API
+  license:
+    name: Commercial
+  version: 1.0.0
+servers:
+  - url: https://api.eu.bronto.io
+  - url: https://api.us.bronto.io
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+tags:
+  - name: api-keys
+    description: >
+      An Application Programming Interface (API) key is a unique identifier. 
+
+      The API Key must be provided as X-BRONTO-API-KEY in headers for the
+      request to be authenticated 
+
+      and authorized by the API server according to the API Key's role. For
+      further information about 
+
+      roles visit [our API Key docs] 
+      https://docs.bronto.io/manage/manage-api-keys
+  - name: context
+    description: >
+      Context is a REST API resource that allows the retrieval of a specified
+      number of log events (default of 100) around 
+
+      a log event of interest, e.g. when a number of log events were returned by
+      a previous query and you then decide you 
+
+      want to see the 50 log events before one of those returned log events. Log
+      events can be retrieved either before, 
+
+      after, or both before and after the specified log event.
+  - name: exports
+    description: >
+      The Bronto Export API allows you to efficiently download large volumes of
+      log data for further analysis.
+
+      The data to be exported can be filtered by entering the search parameters
+      \"from\", \"where\" and \"time_range\" as
+
+      per a normal query in the \"search_details\" object.
+
+
+      To export data the following steps are required:
+
+      1. Create an export using a POST request, which will return an
+      \"export_id\", \"status\" and \"progress\".
+
+      2. Use the export id to get the status of the export task by sending a GET
+      request,
+
+      which will return \"status\" and \"progress\" with a value of percentage
+      completed. When the export is
+
+      completed, the \"status\" will be \"COMPLETE\"
+
+      3. Once the export task has completed you can download your data using
+      curl (or similar)
+
+      from the \"location\" URL returned in the GET response.
+  - name: logs
+    description: >
+      Logs are a sequence of timestamped log events. Logs can be searched to
+      view events matching a filter 
+
+      or to perform statistical functions on matching events.
+  - name: search
+    description: >
+      The REST API for searching data uses queries based on a subset of SQL,
+      with
+
+      the syntax as per
+      https://docs.brontobytes.io/core-features/log-search/query-syntax/.
+
+
+      There are two types of search:
+
+      + event search: allows you to specify a filter and view the matching
+      events returned in the
+
+      response. The response will be paginated if more than 50 matching events
+      are returned.
+
+      + statistical search:  allows you to analyse events using a range of
+      aggregate functions,
+
+      such as count(), which return a number.
+  - name: top-keys
+    description: >
+      Top-Keys is a REST API resource that allows you to easily retrieve the top
+      keys for a specific log.
+  - name: usage
+    description: >
+      Usage is a REST API resource that allows you to easily track your Bronto
+      usage by retrieving usage data relating 
+
+      to data ingestion and amount of data searched, and allowing you to drill
+      down for a specific dataset over a defined timeframe.
+  - name: users
+    description: >
+      Users are given specific roles, where each role determines the user's
+      permissions within the application. Those roles are as follows:
+
+      - "Admin" role has permission for all actions on all entities in the
+      application.
+
+      - "Standard" role allows Read/Write and Delete actions on entities in
+      non-sensitive areas of the application.
+
+      - "ReadOnly" role allows only read actions and only on entities in
+      non-sensitive areas of the application.
+paths:
+  /api-keys:
+    get:
+      tags:
+        - api-keys
+      summary: Retrieve a list of API keys
+      operationId: listApiKeys
+      responses:
+        '200':
+          description: A list of API keys
+          headers:
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  api_keys:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ApiKey'
+        '403':
+          description: Forbidden - The user does not have the privileges to view API keys
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too Many Request - Fair usage limits exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error - An error occurred on the server side.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+        - api-keys
+      summary: Create a new API key
+      operationId: createApiKey
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateApiKeyRequest'
+        required: true
+      responses:
+        '201':
+          description: API keys is created successfully
+          headers:
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKey'
+        '400':
+          description: Bad Request - The body in the request is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: >-
+            Forbidden - The user does not have the privileges to create new api
+            keys
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too Many Request - Fair usage limits exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error - An error occurred on the server side.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /api-keys/{apiKeyId}:
+    delete:
+      tags:
+        - api-keys
+      summary: Delete an API key
+      operationId: deleteApiKey
+      parameters:
+        - name: apiKeyId
+          in: path
+          description: The ID of the API key to delete
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 41521f35-1b06-41f0-9cdc-9a938b5739d1
+      responses:
+        '204':
+          description: API key deleted successfully
+          headers:
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+        '403':
+          description: Forbidden - The user does not have the privileges to delete API keys
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not Found - The API key is not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too Many Request - Fair usage limits exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error - An error occurred on the server side.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags:
+        - api-keys
+      summary: Update an API key
+      operationId: updateApiKey
+      parameters:
+        - name: apiKeyId
+          in: path
+          description: The ID of the API key to update
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 41521f35-1b06-41f0-9cdc-9a938b5739d1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateApiKeyRequest'
+        required: true
+      responses:
+        '200':
+          description: API key updated successfully
+          headers:
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+        '403':
+          description: >-
+            Forbidden - The user does not have the privileges to update the API
+            key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not Found - The API key is not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too Many Request - Fair usage limits exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error - An error occurred on the server side.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /users:
+    get:
+      tags:
+        - users
+      summary: Retrieve a list of users
+      operationId: listUsers
+      responses:
+        '200':
+          description: A list of users
+          headers:
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+        '403':
+          description: Forbidden - The user does not have the privileges to list users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too Many Request - Fair usage limits exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error - An error occurred on the server side.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+        - users
+      summary: Create a new user
+      operationId: createUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+        required: true
+      responses:
+        '201':
+          description: User created successfully
+          headers:
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Bad Request - The body in the request is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: >-
+            Forbidden - The user does not have the privileges to create new
+            users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too Many Request - Fair usage limits exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error - An error occurred on the server side.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /users/{userId}:
+    get:
+      tags:
+        - users
+      summary: Get a single user by ID
+      operationId: getUserById
+      parameters:
+        - name: userId
+          in: path
+          description: The unique identifier of the user to retrieve
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 41521f35-1b06-41f0-9cdc-9a938b5739d1
+      responses:
+        '200':
+          description: User details retrieved successfully
+          headers:
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '403':
+          description: >-
+            Forbidden - The user does not have the privileges to retrieve user
+            details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not Found - The User is not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too Many Request - Fair usage limits exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error - An error occurred on the server side.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+        - users
+      summary: Delete a user by ID
+      operationId: deleteUserById
+      parameters:
+        - name: userId
+          in: path
+          description: Unique identifier of the user to delete
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: User deleted successfully
+          headers:
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+        '403':
+          description: Forbidden - The user does not have the privileges to delete users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not Found - The User is not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too Many Request - Fair usage limits exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error - An error occurred on the server side.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      tags:
+        - users
+      summary: Updates a user
+      operationId: updateUser
+      parameters:
+        - name: userId
+          in: path
+          description: Unique identifier of the user to update
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+        required: true
+      responses:
+        '200':
+          description: User updated successfully
+          headers:
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Bad Request - The body in the request is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden - The user does not have the privileges to new users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too Many Request - Fair usage limits exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error - An error occurred on the server side.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /search:
+    get:
+      tags:
+        - search
+      summary: Execute a query
+      description: >
+        The REST API for searching data uses queries based on a subset of SQL,
+        with 
+
+        the syntax as per
+        https://docs.brontobytes.io/core-features/log-search/query-syntax/. 
+
+
+        There are two types of search:
+
+        + event search: allows you to specify a filter and view the matching
+        events returned in the
+
+        response. The response will be paginated if more than 50 matching events
+        are returned.
+
+        + statistical search:  allows you to analyse events using a range of
+        aggregate functions, 
+
+        such as count(), which return a number.
+      operationId: search
+      parameters:
+        - name: from
+          in: query
+          description: >
+            The ids of the logs to search.
+
+            One of either the `from` or the `from_tags` parameters _must_ be
+            specified.
+          schema:
+            minItems: 1
+            uniqueItems: true
+            type: string
+          example:
+            - 550e8400-e29b-41d4-a716-446655440000
+            - 297bb888-83b1-44e0-8ab6-47879f1275a2
+        - name: from_tags
+          in: query
+          description: >
+            The tags to search. Each tag should be in the form `<key>:<value>`,
+            e.g., `environment:production`.
+
+            One of either the `from` or the `from_tags` parameters _must_ be
+            specified. 
+
+            If _both_ are specified then `from_tags` takes precedence, and the
+            `from` value is ignored.
+
+            If the key or the value contain a `:` or `=` character, then these
+            can be escaped by wrapping the entire key or value in double-quotes
+            `"`.
+          schema:
+            minItems: 1
+            uniqueItems: true
+            type: string
+          example: environment:production
+        - name: time_range
+          in: query
+          description: >
+            The relative time range for which to query data. Time range
+            supported is from milliseconds to years. For an exact range, use
+            `from_ts` and `to_ts` instead.
+          schema:
+            type: string
+          examples:
+            ms:
+              value: Last 800 milliseconds
+            sec:
+              value: Last 10 seconds
+            day:
+              value: Last 2 days
+            week:
+              value: Last 3 weeks
+        - name: from_ts
+          in: query
+          description: >-
+            The starting time (unix time in milliseconds) for which to query
+            data. Must be used together with `to_ts`. This parameter is not to
+            be used when using `time_range`.
+          schema:
+            type: integer
+          example: 1709251200000
+        - name: to_ts
+          in: query
+          description: >-
+            The ending time (unix time in milliseconds) for which to query data.
+            Must be used together with `from_ts`. This parameter is incompatible
+            with `time_range`.
+          schema:
+            type: integer
+          example: 1711390455601
+        - name: where
+          in: query
+          description: >-
+            The where parameter is used to filter the results of your query. 
+            See https://docs.bronto.io/core-features/log-search/query-syntax for
+            more details The filter can combine multiple terms using AND, OR,
+            NOT.
+          schema:
+            type: string
+          examples:
+            kv:
+              value: ip=10.0.0.1
+            count:
+              value: count(*)
+            sum:
+              value: sum(payload_size)
+            multiple_stat:
+              value: count(*), sum(payload_size)
+            internal:
+              value: '@raw'
+            multiple:
+              value: payload_size, status, client_ip
+        - name: select
+          in: query
+          description: >-
+            The select parameter selects values of one or more specified keys
+            and can be  considered to be equivalent to returning columns from a
+            table.  It can select keys either by name, e.g. query params with
+            select=ip_address or with  an aggregate function (count, max, min,
+            avg, sum) on the values of the specified key,  e.g. query params
+            with select=count(ip_address). Multiple selects can be used and they
+            would separated by & in the query param,  e.g.
+            &select=count(ip_address)&select=count(hostname).  The following
+            internal columns are always available\: @time, @origin & @raw
+          schema:
+            type: string
+          example: message
+        - name: groups
+          in: query
+          description: >-
+            The groups parameter specifies a key to use to arrange the results
+            returned by an aggregate function,  (such as count, max, min, avg,
+            sum) into groups of values. The aggregate function returns a single
+            value  for each group. Multiple groups can be specified in the
+            request if separated by &, e.g. query params with
+            &groups=customer_id or &groups=customer_id&groups=hostname.
+          schema:
+            type: string
+          example:
+            - user
+            - ip
+        - name: limit
+          in: query
+          description: >-
+            The maximum number of events that an event search should return. In
+            a query with a group by, it limits the number of groups returned. It
+            does not affect a statistical search using aggregate functions.
+          schema:
+            maximum: 6666
+            minimum: 1
+            type: integer
+            default: 100
+          example: 50
+        - name: num_of_slices
+          in: query
+          description: The number of buckets to break the time series results up into.
+          schema:
+            type: integer
+            default: 10
+          example: 50
+        - name: from_sequence
+          in: query
+          description: >-
+            The starting sequence for which to query data. This is more granular
+            than a timestamp but also requires a `from_ts` param.
+          schema:
+            type: integer
+          example: 111721913
+        - name: most_recent_first
+          in: query
+          description: Flag to indicate order in which results should be returned.
+          schema:
+            type: boolean
+          example: true
+      responses:
+        '200':
+          description: Search results
+          headers:
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  explain:
+                    $ref: '#/components/schemas/QueryExplain'
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/QueryResult'
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Event'
+                  groups:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Group'
+                  groups_series:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GroupSeriesItem'
+                  metadata:
+                    $ref: '#/components/schemas/QueryMetadata'
+                  totals:
+                    type: object
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+                  links:
+                    $ref: '#/components/schemas/SearchCompletedLinks'
+        '400':
+          description: Bad Request - The body in the request is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too Many Request - Fair usage limits exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error - An error occurred on the server side.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /context:
+    get:
+      tags:
+        - context
+      summary: Retrieve contextual information for a given sequence and log
+      operationId: getContext
+      parameters:
+        - name: from
+          in: query
+          description: >
+            The ids of the logs to search.
+
+            One of either the `from` or the `from_tags` parameters _must_ be
+            specified.
+          schema:
+            minItems: 1
+            uniqueItems: true
+            type: string
+          example:
+            - 550e8400-e29b-41d4-a716-446655440000
+            - 297bb888-83b1-44e0-8ab6-47879f1275a2
+        - name: from_tags
+          in: query
+          description: >
+            The tags to search. Each tag should be in the form `<key>:<value>`,
+            e.g., `environment:production`.
+
+            One of either the `from` or the `from_tags` parameters _must_ be
+            specified. 
+
+            If _both_ are specified then `from_tags` takes precedence, and the
+            `from` value is ignored.
+
+            If the key or the value contain a `:` or `=` character, then these
+            can be escaped by wrapping the entire key or value in double-quotes
+            `"`.
+          schema:
+            minItems: 1
+            uniqueItems: true
+            type: string
+          example: environment:production
+        - name: timestamp
+          in: query
+          description: The timestamp for the event for which context is being retrieved
+          required: true
+          schema:
+            type: integer
+          example: 1709251200000
+        - name: limit
+          in: query
+          description: >-
+            The maximum number of events that an event search should return. In
+            a query with a group by, it limits the number of groups returned. It
+            does not affect a statistical search using aggregate functions.
+          schema:
+            maximum: 6666
+            minimum: 1
+            type: integer
+            default: 100
+          example: 50
+        - name: from_sequence
+          in: query
+          description: >-
+            The starting sequence for which to query data. This is more granular
+            than a timestamp but also requires a `from_ts` param.
+          schema:
+            type: integer
+          example: 111721913
+        - name: direction
+          in: query
+          description: Enum to indicate if results before or after should be retrieved.
+          required: false
+          schema:
+            type: string
+            enum:
+              - both
+              - after
+              - before
+          example: both
+      responses:
+        '200':
+          description: Search results
+          headers:
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  explain:
+                    $ref: '#/components/schemas/QueryExplain'
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/QueryResult'
+                  links:
+                    $ref: '#/components/schemas/ContextLinks'
+        '400':
+          description: Bad Request - The body in the request is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too Many Request - Fair usage limits exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error - An error occurred on the server side.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /logs:
+    get:
+      tags:
+        - logs
+      summary: Retrieve a list of logs
+      operationId: listLogs
+      responses:
+        '200':
+          description: A list of log entries
+          headers:
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Log'
+        '429':
+          description: Too Many Request - Fair usage limits exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error - An error occurred on the server side.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+        - logs
+      summary: Create a new log
+      operationId: createLog
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLogRequest'
+        required: true
+      responses:
+        '201':
+          description: Log created successfully
+          headers:
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Log'
+        '400':
+          description: Bad Request - The body in the request is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too Many Request - Fair usage limits exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error - An error occurred on the server side.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /forward-configs:
+    get:
+      tags:
+        - forward
+      summary: Retrieve forward configs
+      description: Retrieves the list of all forward configs set up for the account
+      operationId: listForwardConfigs
+      responses:
+        '200':
+          description: A list of forward configs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  forward-configs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ForwardConfig'
+        '403':
+          description: >-
+            Forbidden - The user does not have the privileges to view the
+            forward configs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too Many Request - Fair usage limits exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error - An error occurred on the server side.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+        - forward
+      summary: Create a new forward config
+      description: Create a forward config, to forward log events outside the Bronto system
+      operationId: createForwardConfig
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForwardConfigRequest'
+        required: true
+      responses:
+        '201':
+          description: Forward config is created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForwardConfig'
+        '400':
+          description: Bad Request - The body in the request is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: >-
+            Forbidden - The user does not have the privileges to create new
+            forward config
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too Many Request - Fair usage limits exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error - An error occurred on the server side.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /forward-configs/test-destination:
+    post:
+      tags:
+        - forward
+      summary: Test access to the destination
+      description: >-
+        Check access to the destination. A test file will be created and deleted
+        to make sure Bronto can access your destination
+      operationId: testDestination
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForwardConfigDestination'
+        required: true
+      responses:
+        '200':
+          description: Destination check completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: boolean
+                    description: >-
+                      true if the test was successful, Bronto can access the
+                      bucket
+        '400':
+          description: Bad Request - The body in the request is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: >-
+            Forbidden - The user does not have the privileges to test forward
+            configurations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too Many Request - Fair usage limits exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error - An error occurred on the server side.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /forward-configs/{forwardId}:
+    put:
+      tags:
+        - forward
+      summary: Update an existing forward config
+      description: Update a forward config, to forward log events outside the Bronto system
+      operationId: updateForwardConfig
+      parameters:
+        - name: forwardId
+          in: path
+          description: The ID of the config to update
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 41521f35-1b06-41f0-9cdc-9a938b5739d1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForwardConfigRequest'
+        required: true
+      responses:
+        '200':
+          description: Forward config is successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForwardConfig'
+        '400':
+          description: Bad Request - The body in the request is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: >-
+            Forbidden - The user does not have the privileges to update the
+            config
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too Many Request - Fair usage limits exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error - An error occurred on the server side.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+        - forward
+      summary: Delete a forward config
+      operationId: deleteForwardConfig
+      parameters:
+        - name: forwardId
+          in: path
+          description: The ID of the config to delete
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 41521f35-1b06-41f0-9cdc-9a938b5739d1
+      responses:
+        '204':
+          description: Config deleted successfully
+        '403':
+          description: >-
+            Forbidden - The user does not have the privileges to delete a
+            forward config
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not Found - The config is not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too Many Request - Fair usage limits exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error - An error occurred on the server side.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /top-keys:
+    get:
+      tags:
+        - top-keys
+      summary: Get the top keys for a specific log id
+      operationId: getTopKeysById
+      parameters:
+        - name: log_id
+          in: query
+          description: >
+            The ids of the logs to retrieve the top keys for. 
+
+            If no log ids are specified, then top keys are returned for all
+            logs.
+          required: false
+          schema:
+            type: string
+            format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: '#/components/schemas/TopKeys'
+        '400':
+          description: Bad Request - The body in the request is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not Found - The logId in the request is not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too Many Request - Fair usage limits exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error - An error occurred on the server side.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /usage/organizations/logs:
+    get:
+      tags:
+        - usage
+      summary: Get the usage over a period of time for a log id.
+      operationId: getUsageByLogId
+      parameters:
+        - name: time_range
+          in: query
+          description: >
+            The relative time range for which to calculate usage data. Time
+            range supported is from minutes to years. For an exact range, use
+            `from_ts` and `to_ts` instead.
+          schema:
+            type: string
+          examples:
+            mins:
+              value: Last 10 minutes
+            day:
+              value: Last 2 days
+            week:
+              value: Last 3 weeks
+        - name: from_ts
+          in: query
+          description: >-
+            The starting time (unix time in milliseconds) for which to calculate
+            usage data. Must be used together with `to_ts`. This parameter is
+            not to be used when using `time_range`.
+          schema:
+            type: integer
+          example: 1709251200000
+        - name: to_ts
+          in: query
+          description: >-
+            The ending time (unix time in milliseconds) for which to calculate
+            usage data. Must be used together with `from_ts`. This parameter is
+            incompatible with `time_range`.
+          schema:
+            type: integer
+          example: 1711390455601
+        - name: usage_type
+          in: query
+          description: The type of usage to query.
+          schema:
+            type: string
+            enum:
+              - ingestion
+              - search
+              - export
+        - name: limit
+          in: query
+          description: >
+            Returns the top N logs based on the usage. If not provided, the
+            default limit is 50. The maximum limit is 100.
+          required: false
+          schema:
+            type: integer
+          example: 10
+        - name: num_of_slices
+          in: query
+          description: >
+            The num_of_slices parameter defines how the time range is divided
+            into intervals.  It is optional, and if not provided, a default
+            value is applied. The default number of slices is 1 minute
+            granularity for up to 12 hours time range  and 20 minutes
+            granularity for longer than 12 hours time range up to 720 slices. -
+            default for 20 minutes time window: 20 slices - default for 12 hour
+            time window: 720 slices - default for 1 day time window: 72 slices
+            (1 slice per 20 minutes) - default for 10 days time window: 720
+            slices (1 slice per 20 minutes) - default for 30 days time window:
+            720 slices (max number of slices allowed)
+          required: false
+          schema:
+            type: integer
+          example: 10
+        - name: delta
+          in: query
+          description: >
+            Enables calculation of the difference between the current and
+            previous time range values.  When set to true, the response includes
+            a delta object with the computed difference and its relative change.
+            Defaults to false.
+          required: false
+          schema:
+            type: boolean
+          example: true
+        - name: delta_time_range
+          in: query
+          description: >
+            The time period for which to query data for delta comparison. Either
+            `delta_time_range` or both `delta_from_ts` and `delta_to_ts` can be
+            provided if `delta` is enabled. If `delta_time_range` is provided,
+            it will take precedence
+          required: false
+          schema:
+            type: string
+          example: '''Previous month'', ''Previous quarter'', ''This day last week'''
+        - name: delta_from_ts
+          in: query
+          description: >
+            The starting unix time in milliseconds for which to query data for
+            delta comparison. Either `delta_time_range` or both `delta_from_ts`
+            and `delta_to_ts` can be provided if `delta` is enabled. If
+            `delta_time_range` is provided, it will take precedence.
+          required: false
+          schema:
+            type: integer
+          example: 1709251200000
+        - name: delta_to_ts
+          in: query
+          description: >
+            The ending unix time in milliseconds for which to query data for
+            delta comparison. Either `delta_time_range` or both `delta_from_ts`
+            and `delta_to_ts` can be provided if `delta` is enabled. If
+            `delta_time_range` is provided, it will take precedence.
+          required: false
+          schema:
+            type: integer
+          example: 1711390455601
+      responses:
+        '200':
+          description: Successful response
+          headers:
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageByLogId'
+        '400':
+          description: Bad Request - The time range in the request is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too Many Request - Fair usage limits exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error - An error occurred on the server side.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /usage/users:
+    get:
+      tags:
+        - usage
+      summary: Get the usage over a period of time for a user per log id.
+      operationId: getUsageByUserPerLogId
+      parameters:
+        - name: time_range
+          in: query
+          description: >
+            The relative time range for which to calculate usage data. Time
+            range supported is from minutes to years. For an exact range, use
+            `from_ts` and `to_ts` instead.
+          schema:
+            type: string
+          examples:
+            mins:
+              value: Last 10 minutes
+            day:
+              value: Last 2 days
+            week:
+              value: Last 3 weeks
+        - name: from_ts
+          in: query
+          description: >-
+            The starting time (unix time in milliseconds) for which to calculate
+            usage data. Must be used together with `to_ts`. This parameter is
+            not to be used when using `time_range`.
+          schema:
+            type: integer
+          example: 1709251200000
+        - name: to_ts
+          in: query
+          description: >-
+            The ending time (unix time in milliseconds) for which to calculate
+            usage data. Must be used together with `from_ts`. This parameter is
+            incompatible with `time_range`.
+          schema:
+            type: integer
+          example: 1711390455601
+        - name: usage_type
+          in: query
+          description: The type of usage to query.
+          schema:
+            type: string
+            default: search
+            enum:
+              - search
+        - name: limit
+          in: query
+          description: >
+            Returns the top N logs based on the usage. If not provided, the
+            default limit is 50. The maximum limit is 100.
+          required: false
+          schema:
+            type: integer
+          example: 10
+        - name: num_of_slices
+          in: query
+          description: >
+            The num_of_slices parameter defines how the time range is divided
+            into intervals.  It is optional, and if not provided, a default
+            value is applied. The default number of slices is 1 minute
+            granularity for up to 12 hours time range  and 20 minutes
+            granularity for longer than 12 hours time range up to 720 slices. -
+            default for 20 minutes time window: 20 slices - default for 12 hour
+            time window: 720 slices - default for 1 day time window: 72 slices
+            (1 slice per 20 minutes) - default for 10 days time window: 720
+            slices (1 slice per 20 minutes) - default for 30 days time window:
+            720 slices (max number of slices allowed)
+          required: false
+          schema:
+            type: integer
+        - name: metric
+          in: query
+          description: The usage metric to query
+          schema:
+            type: string
+            default: data
+            enum:
+              - volume
+              - latency
+        - name: delta
+          in: query
+          description: >
+            Enables calculation of the difference between the current and
+            previous time range values.  When set to true, the response includes
+            a delta object with the computed difference and its relative change.
+            Defaults to false.
+          required: false
+          schema:
+            type: boolean
+          example: true
+        - name: delta_time_range
+          in: query
+          description: >
+            The time period for which to query data for delta comparison. Either
+            `delta_time_range` or both `delta_from_ts` and `delta_to_ts` can be
+            provided if `delta` is enabled. If `delta_time_range` is provided,
+            it will take precedence
+          required: false
+          schema:
+            type: string
+          example: '''Previous month'', ''Previous quarter'', ''This day last week'''
+        - name: delta_from_ts
+          in: query
+          description: >
+            The starting unix time in milliseconds for which to query data for
+            delta comparison. Either `delta_time_range` or both `delta_from_ts`
+            and `delta_to_ts` can be provided if `delta` is enabled. If
+            `delta_time_range` is provided, it will take precedence.
+          required: false
+          schema:
+            type: integer
+          example: 1709251200000
+        - name: delta_to_ts
+          in: query
+          description: >
+            The ending unix time in milliseconds for which to query data for
+            delta comparison. Either `delta_time_range` or both `delta_from_ts`
+            and `delta_to_ts` can be provided if `delta` is enabled. If
+            `delta_time_range` is provided, it will take precedence.
+          required: false
+          schema:
+            type: integer
+          example: 1711390455601
+      responses:
+        '200':
+          description: Successful response
+          headers:
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageByLogId'
+        '400':
+          description: Bad Request - The time range in the request is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Too Many Request - Fair usage limits exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal Server Error - An error occurred on the server side.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /exports:
+    get:
+      tags:
+        - exports
+      summary: Retrieve a list of exports
+      operationId: listExports
+      responses:
+        '200':
+          description: A list of exports
+          headers:
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exports:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Export'
+        default:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      tags:
+        - exports
+      summary: Create a new export
+      operationId: createExport
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateExportRequest'
+        required: true
+      responses:
+        '201':
+          description: Export created successfully
+          headers:
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Export'
+        '400':
+          description: Bad Request - The body in the request is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /exports/{exportId}:
+    get:
+      tags:
+        - exports
+      summary: Retrieve an export by ID
+      operationId: getExportById
+      parameters:
+        - name: exportId
+          in: path
+          description: The unique identifier of the export to retrieve
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Export retrieved successfully
+          headers:
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Export'
+        '404':
+          description: Not Found - The export is not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags:
+        - exports
+      summary: Delete an export by ID
+      operationId: deleteExportById
+      parameters:
+        - name: exportId
+          in: path
+          description: The unique identifier of the export to delete
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Export deleted successfully
+          headers:
+            RateLimit-Limit:
+              $ref: '#/components/headers/RateLimitLimit'
+            RateLimit-Remaining:
+              $ref: '#/components/headers/RateLimitRemaining'
+            RateLimit-Reset:
+              $ref: '#/components/headers/RateLimitReset'
+        '403':
+          description: Forbidden - The user does not have the privileges to delete exports
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not Found - The export is not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        default:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    ApiKey:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the API key
+          format: uuid
+        name:
+          type: string
+          description: The name of the API key
+          example: Production API Key
+        created_at:
+          type: integer
+          description: The timestamp when the API key was created
+          format: int64
+          example: 1710948395538
+        api_key:
+          type: string
+          description: >-
+            The first 8 characters of the API key. Note its not possible to
+            retrieve the key after creation time.
+          example: 2ad85149
+        roles:
+          type: object
+          description: A list of api key role ids
+          example:
+            - SearchApi
+            - IngestionApi
+        tags:
+          $ref: '#/components/schemas/Tags'
+    ErrorResponse:
+      required:
+        - code
+        - correlation_id
+        - message
+      type: object
+      properties:
+        code:
+          minimum: 200
+          type: integer
+          description: The http response code.
+          format: int32
+        correlation_id:
+          type: string
+          description: The unique identifier for the request.
+        message:
+          type: string
+    CreateApiKeyRequest:
+      required:
+        - name
+        - roles
+      type: object
+      properties:
+        name:
+          maxLength: 255
+          minLength: 1
+          type: string
+          description: The name of the API key to create
+          example: Production API Key
+        roles:
+          type: object
+          description: A list of api key role ids
+          example:
+            - IngestionApi
+    UpdateApiKeyRequest:
+      type: object
+      properties:
+        name:
+          maxLength: 255
+          minLength: 1
+          type: string
+          description: The new name for the API key
+          example: Production API Key
+        roles:
+          type: object
+          description: A list of api key role ids
+          example:
+            - IngestionApi
+    User:
+      required:
+        - email
+        - first_name
+        - id
+        - last_name
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the user
+          format: uuid
+        first_name:
+          type: string
+          description: The user's first name
+          example: John
+        last_name:
+          type: string
+          description: The user's last name
+          example: Doe
+        email:
+          type: string
+          description: The user's email address
+          format: email
+          example: john@company.com
+        roles:
+          type: array
+          description: A list of role ids
+          example:
+            - ReadOnly
+            - Standard
+          items:
+            type: string
+        last_logins:
+          type: object
+          additionalProperties:
+            type: integer
+            description: Unix timestamp representing the last login time for the method.
+            format: int64
+          description: A map of login methods to their last login timestamps (Unix epoch).
+          example:
+            Okta: 1731370728
+            Password: 1731338939
+        tags:
+          $ref: '#/components/schemas/Tags'
+    CreateUserRequest:
+      required:
+        - email
+        - first_name
+        - last_name
+        - roles
+      type: object
+      properties:
+        first_name:
+          maxLength: 255
+          minLength: 1
+          type: string
+          description: The user's first name
+          example: Alice
+        last_name:
+          maxLength: 255
+          minLength: 1
+          type: string
+          description: The user's last name
+          example: Smith
+        email:
+          type: string
+          description: The user's email address
+          format: email
+          example: alice@company.com
+        roles:
+          type: array
+          description: A list of role ids
+          example:
+            - Admin,
+            - Standard
+            - ReadOnly
+          items:
+            type: string
+    UpdateUserRequest:
+      type: object
+      properties:
+        first_name:
+          maxLength: 255
+          minLength: 1
+          type: string
+          description: The user's first name
+          example: Alice
+        last_name:
+          maxLength: 255
+          minLength: 1
+          type: string
+          description: The user's last name
+          example: Smith
+        roles:
+          type: array
+          description: A list of role ids
+          example:
+            - Admin
+            - Standard
+            - ReadOnly
+          items:
+            type: string
+    QueryExplain:
+      type: object
+      properties:
+        Execution time (millis):
+          type: string
+          description: Measure of time taken to execute the query.
+          example: '353'
+    QueryResult:
+      type: object
+      properties:
+        '@time':
+          type: string
+          description: Human readable timestamp of when this log event was ingested
+          example: 2024-03-27 10:25:40.632 UTC
+        '@sequence':
+          type: string
+          description: >-
+            The sequence number of this log event. Note sequence numbers are
+            only unique within a millisecond timestamp.
+          example: '111721913'
+        '@raw':
+          type: string
+          description: The full log line as received
+          example: >-
+            10.0.0.1 - - [27/Mar/2024:10:54:39 +0000] "GET / HTTP/1.1" 200 721
+            "-" "ELB-HealthChecker/2.0"
+        '@context':
+          type: string
+          description: >-
+            A url that can be used to get the log events before and after this
+            log event.
+          format: uri
+          example: >-
+            https://api.bronto.io/context?sequence=111721913&limit=1&from=23746675-7022-4985-bd74-4af9eba58d72&timestamp=1711535140632&direction=both
+        metadata:
+          type: object
+          properties:
+            logId:
+              type: string
+              description: The unique identifier of the log this log event came from
+              format: uuid
+            timestamp:
+              type: integer
+              description: The timestamp of when this log event was ingested
+              example: 1711535140632
+            sequence:
+              type: integer
+              description: >-
+                The sequence number of this log event. Note sequence numbers are
+                only unique within a millisecond timestamp.
+              example: 111721913
+            origin:
+              type: string
+              description: The identity of the sender if this log event.
+              example: 10.0.0.1
+            context:
+              type: string
+              description: >-
+                A url that can be used to get the log events before and after
+                this log event.
+              format: uri
+              example: >-
+                https://api.bronto.io/context?sequence=111721913&limit=1&from=23746675-7022-4985-bd74-4af9eba58d72&timestamp=1711535140632&direction=both
+            selectedKeys:
+              type: object
+              description: The selected columns displayed in this result
+              example:
+                '@time': 2024-03-27 10:25:40.632 UTC
+            unselectedKeys:
+              type: object
+              description: The available columns not displayed in this result
+              example:
+                id: message_0
+                current_time: 1711535140
+        links:
+          type: array
+          items:
+            anyOf:
+              - type: object
+                properties:
+                  rel:
+                    type: string
+                    description: context
+                    example: context
+                  href:
+                    type: string
+                    description: >-
+                      A url that can be used to get the log events before and
+                      after this log event.
+                    format: uri
+                    example: >-
+                      https://api.bronto.io/context?sequence=111721913&limit=1&from=23746675-7022-4985-bd74-4af9eba58d72&timestamp=1711535140632&direction=both
+    Event:
+      type: object
+      properties:
+        '@raw':
+          type: string
+          description: The log message as received
+          example: >-
+            10.0.108.203 - - [27/May/2024:23:47:27 +0000] "GET / HTTP/1.1" 200
+            675 "-" "ELB-HealthChecker/2.0"
+        '@time':
+          type: string
+          description: >
+            Human readable time of when this event was ingested into Bronto
+            Bytes. The time is in UTC and in the format "YYYY-MM-DD HH:MM:SS.MMM
+            UTC"
+          example: 2024-05-27 23:26:34.331 UTC
+        '@status':
+          type: string
+          description: >
+            Indicates the severity of the event. Possible values are:
+
+            - **info**: Denotes standard events or successful operations, such
+            as HTTP 200 responses.
+
+            - **warn**: Highlights potentially problematic situations that are
+            not critical but may require attention, 
+              such as HTTP 4xx client errors.
+            - **error**: Represents critical issues or failures, such as HTTP
+            5xx server errors or detected 
+              exceptions like stack traces.
+          example: info
+        message_kvs:
+          type: object
+          description: Key-value pairs extracted from the log message
+          example:
+            method: GET
+            statusCode: '200'
+            path: /
+        attributes:
+          type: object
+          description: >
+            Additional details attached to the log event, such as resource
+            attributes, environment settings, or custom attributes defined by
+            the user.
+          example:
+            $private_ip: 10.0.22.230
+            $environment: production
+        metadata:
+          type: object
+          properties:
+            service_id:
+              type: string
+              description: The unique identifier of the service this event came from.
+              format: uuid
+              example: 23746675-7022-4985-bd74-4af9eba58d72
+            timestamp:
+              type: integer
+              description: Unix timestamp in milliseconds of when this event was ingested.
+              example: 1716853347801
+            sequence:
+              type: integer
+              description: >-
+                The sequence number of this log event. Note sequence numbers are
+                only unique within a millisecond timestamp.
+              example: 111721913
+            context:
+              type: string
+              description: >-
+                A url that can be used to get the events before and after this
+                event.
+              format: uri
+              example: >
+                "https://api.eu.bronto.io/context?sequence=213&from=37bdf479-7c95-4e81-982a-25d0680fb602&timestamp=1716853354331&direction=both"
+          description: The metadata of the event
+        links:
+          type: array
+          items:
+            anyOf:
+              - type: object
+                properties:
+                  rel:
+                    type: string
+                    description: next
+                    example: context
+                  href:
+                    type: string
+                    description: >-
+                      A url that can be used to get the log events before and
+                      after this log event.
+                    format: uri
+                    example: >-
+                      https://api.bronto.io/context?sequence=111721913&limit=1&from=23746675-7022-4985-bd74-4af9eba58d72&timestamp=1711535140632&direction=both
+    Group:
+      type: object
+      properties:
+        group:
+          type: string
+          description: The groupby key or keys used by this group
+          example: '[US]'
+        count:
+          type: integer
+          description: The number of times this group appeared in the logs
+          format: int64
+          example: 124
+        stat:
+          type: string
+          description: The statistical function applied to the group
+          example: average(bytes)
+        value:
+          type: number
+          description: Overall value of the statistical function applied
+          format: double
+          example: 50325.25
+        timeseries:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupTimeSeries'
+    GroupSeriesItem:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The group name
+          example: host123
+        count:
+          type: integer
+          description: The number of times this group appeared in the logs
+          format: int64
+          example: 124
+        stat:
+          type: string
+          description: The statistical function applied to the group
+          example: average(duration_millis)
+        value:
+          type: number
+          description: Overall value of the statistical function applied
+          format: double
+          example: 50325.25
+        quantiles:
+          type: object
+          description: >
+            Statistical distribution of the group’s metric values shown through
+            key quantiles:
+
+            - **min**: The minimum observed value.
+
+            - **p25**: The 25th percentile (first quartile).
+
+            - **p50**: The 50th percentile (median).
+
+            - **p75**: The 75th percentile (third quartile).
+
+            - **p90**: The 90th percentile.
+
+            - **p95**: The 95th percentile.
+
+            - **p99**: The 99th percentile.
+
+            - **p999**: The 99.9th percentile, highlighting extreme outliers.
+
+            - **max**: The maximum observed value.
+          example:
+            min: 691
+            p25: 713.75
+            p50: 796
+            p75: 847.5
+            p90: 1237
+            p95: 1331
+            p99: 1331
+            p999: 1331
+            max: 1331
+        series_resolution_ms:
+          type: number
+          description: The resolution of the timeseries in milliseconds
+          format: int64
+          example: 60000
+        timeseries:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupTimeSeries'
+        groups_series:
+          type: array
+          description: The subgroups of the group (multi group-by)
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: The group name
+                example: host123
+              count:
+                type: integer
+                description: The number of times this group appeared in the logs
+                format: int64
+                example: 124
+              stat:
+                type: string
+                description: The statistical function applied to the group
+                example: average(duration_millis)
+              value:
+                type: number
+                description: Overall value of the statistical function applied
+                format: double
+                example: 50325.25
+              series_resolution_ms:
+                type: number
+                description: The resolution of the timeseries in milliseconds
+                format: int64
+                example: 60000
+              timeseries:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GroupTimeSeries'
+    QueryMetadata:
+      type: object
+      properties:
+        select:
+          type: array
+          description: >-
+            The columns that were selected in the query request, and which
+            appear in the results table.
+          example:
+            - host
+            - status
+            - method
+          items:
+            type: string
+        correlation_id:
+          type: string
+          description: |
+            The identifier which uniquely identifies this query.
+          example: 00000000-0000-0000-0000-000000000000
+    Pagination:
+      type: object
+      properties:
+        next_page_url:
+          type: string
+          description: The url to fetch the next set of results
+          format: uri
+    SearchCompletedLinks:
+      type: array
+      items:
+        anyOf:
+          - type: object
+            properties:
+              rel:
+                type: string
+                description: next
+                example: next
+              href:
+                type: string
+                description: >-
+                  For paginated event search queries, the URL which can be used
+                  to fetch the next page of results.
+                format: uri
+    SearchInProgressLinks:
+      type: array
+      items:
+        anyOf:
+          - type: object
+            properties:
+              rel:
+                type: string
+                description: status
+                example: status
+              href:
+                type: string
+                description: The URL to fetch the query's status
+                format: uri
+    SearchCompletedLinksAsyncEnabled:
+      type: array
+      items:
+        anyOf:
+          - type: object
+            properties:
+              rel:
+                type: string
+                description: status
+                example: status
+              href:
+                type: string
+                description: The URL to fetch the query's status
+                format: uri
+          - type: object
+            properties:
+              rel:
+                type: string
+                description: next
+                example: next
+              href:
+                type: string
+                description: >-
+                  For paginated event search queries, the URL which can be used
+                  to fetch the next page of results.
+                format: uri
+    ContextLinks:
+      type: array
+      items:
+        anyOf:
+          - type: object
+            properties:
+              rel:
+                type: string
+                description: next
+                example: next
+              href:
+                type: string
+                description: >
+                  The URL which can be used to fetch the next page of results,
+                  if it is available. 
+
+                  A "context" stops after a 60 second time interval without any
+                  log events.
+                format: uri
+          - type: object
+            properties:
+              rel:
+                type: string
+                description: next
+                example: prev
+              href:
+                type: string
+                description: >
+                  The URL which can be used to fetch the previous page of
+                  results, if it is available. 
+
+                  A "context" stops after a 60 second time interval without any
+                  log events.
+                format: uri
+    Log:
+      required:
+        - log
+        - log_id
+        - logset
+      type: object
+      properties:
+        logset:
+          type: string
+          description: The name of the log set
+          example: demo
+        log:
+          type: string
+          description: The name of the log
+          example: firewall
+        log_id:
+          type: string
+          description: The unique identifier of the log
+          format: uuid
+        is_system_generated:
+          type: boolean
+          description: Whether the log is generated by the system
+          example: false
+        tags:
+          $ref: '#/components/schemas/Tags'
+        drop_events:
+          maximum: 1
+          minimum: 0
+          type: number
+          description: >-
+            This is the percentage of new incoming data for this log that will
+            be rejected (where 0.0 is no data rejection  and 1.0 is all data
+            rejection). Rejected data is not recoverable and will not be indexed
+            or monitored.
+          default: 0
+        level:
+          type: string
+          description: >-
+            This is the log level at which incoming events will be accepted. For
+            example if info is set then debug and trace  events will be
+            rejected. Events with no level will be allowed irrespective of the
+            level set. Rejected data is not  recoverable and will not be indexed
+            or monitored.
+          default: trace
+          enum:
+            - trace
+            - debug
+            - info
+            - warning
+            - error
+            - severe
+            - critical
+            - fatal
+            - notice
+            - alert
+            - emergency
+    CreateLogRequest:
+      required:
+        - log
+      type: object
+      properties:
+        logset:
+          maxLength: 255
+          type: string
+          description: The name of the log set
+          example: demo
+        log:
+          maxLength: 255
+          minLength: 1
+          type: string
+          description: The name of the log
+          example: http
+    UpdateLogRequest:
+      required:
+        - log
+      type: object
+      properties:
+        logset:
+          maxLength: 255
+          type: string
+          description: The name of the log set
+          example: demo
+        log:
+          maxLength: 255
+          minLength: 1
+          type: string
+          description: The name of the log
+          example: http
+        drop_events:
+          maximum: 1
+          minimum: 0
+          type: number
+          description: >-
+            This is the percentage of new incoming data for this log that will
+            be rejected (where 0.0 is no data rejection  and 1.0 is all data
+            rejection). Rejected data is not recoverable and will not be indexed
+            or monitored.
+          default: 0
+        level:
+          type: string
+          description: >-
+            This is the log level at which incoming events will be accepted. For
+            example if info is set then debug and trace  events will be
+            rejected. Events with no level will be allowed irrespective of the
+            level set. Rejected data is not  recoverable and will not be indexed
+            or monitored.
+          default: trace
+          enum:
+            - trace
+            - debug
+            - info
+            - warning
+            - error
+            - severe
+            - critical
+            - fatal
+            - notice
+            - alert
+            - emergency
+    LogsetLog:
+      required:
+        - log
+        - log_id
+      type: object
+      properties:
+        log:
+          type: string
+          description: The name of the log
+          example: firewall
+        log_id:
+          type: string
+          description: The unique identifier of the log
+          format: uuid
+    Organization:
+      required:
+        - created_at
+        - id
+        - login_methods
+        - name
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the organization key
+          format: uuid
+        name:
+          type: string
+          description: The name of the organization
+          example: Bronto
+        created_at:
+          type: integer
+          description: The timestamp when the organization was created
+          format: int64
+          example: 1710948395538
+        login_methods:
+          type: object
+    UpdateOrgRequest:
+      required:
+        - login_methods
+      type: object
+      properties:
+        login_methods:
+          type: object
+    Monitor:
+      required:
+        - actions
+        - comparison_operator
+        - created_at
+        - filter
+        - id
+        - logs
+        - name
+        - stat
+        - status
+        - threshold
+        - window
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the monitor
+          format: uuid
+        name:
+          maxLength: 255
+          minLength: 1
+          type: string
+          description: The name of the monitor
+          example: High Error Rate
+        description:
+          maxLength: 4000
+          type: string
+          description: Extra contextual information to add to the monitor.
+          example: Average response time is over 1 seconds in the last 20 minutes
+        filter:
+          maxLength: 255
+          type: string
+          description: The filter used to identify events to monitor on.
+          example: response_time and response_status=200
+        key:
+          maxLength: 50
+          type: string
+          description: The key that identifies the numeric value to monitor
+          example: response_time
+        group_by_keys:
+          maxLength: 3
+          type: array
+          description: The list of keys to group by
+          example:
+            - region
+            - host
+          items:
+            type: string
+        stat:
+          type: string
+          description: The function to compute (MIN, MAX, COUNT, SUM, AVG)
+          example: AVG
+          enum:
+            - MIN
+            - MAX
+            - COUNT
+            - SUM
+            - AVG
+            - AVERAGE
+        comparison_operator:
+          type: string
+          description: >-
+            the comparison operator of the monitor (ABOVE, ABOVE_OR_EQUAL,
+            BELOW, BELOW_OR_EQUAL, EQUAL, NOT_EQUAL)
+          example: ABOVE
+          enum:
+            - BELOW
+            - BELOW_OR_EQUAL
+            - ABOVE
+            - ABOVE_OR_EQUAL
+            - EQUAL
+            - NOT_EQUAL
+        threshold:
+          type: number
+          description: the threshold value of the monitor
+          format: double
+          example: 1000
+        warning_threshold:
+          type: number
+          description: the warning threshold value
+          format: double
+          example: 900
+        window:
+          type: integer
+          description: the time window, expressed in minutes, to evaluate the monitor
+          example: 20
+        logs:
+          maxItems: 50
+          minItems: 1
+          uniqueItems: true
+          type: array
+          description: The list of log identifiers to filter for matching events
+          items:
+            type: string
+            format: uuid
+        actions:
+          maxItems: 10
+          minItems: 1
+          type: array
+          description: >-
+            The list on actions (notifications) to take when the monitor fires
+            or resolves
+          items:
+            $ref: '#/components/schemas/Action'
+        created_at:
+          type: integer
+          description: The timestamp when the monitor was created
+          format: int64
+          example: 1710948395538
+        status:
+          type: string
+          description: The status of the monitor
+          example: OK
+          enum:
+            - OK
+            - NO_DATA
+            - ALERT
+            - WARN
+        monitored_groups:
+          type: array
+          description: Representation of all the monitored groups and their status
+          example:
+            - group_id: region:EU,host:100
+              status: OK
+              groups:
+                region: EU
+                host: 100
+            - group_id: region:EU,host:101
+              status: ALERT
+              groups:
+                region: EU
+                host: 100
+          items:
+            type: object
+            properties:
+              group_id:
+                type: string
+              groups:
+                type: object
+                additionalProperties:
+                  type: string
+              status:
+                type: string
+                description: The status of the monitor
+                example: OK
+                enum:
+                  - OK
+                  - NO_DATA
+                  - ALERT
+                  - WARN
+        no_data_status:
+          type: string
+          description: >-
+            Specify the status to use if a group has no data (no events matched
+            in a time window)
+          example: OK
+          enum:
+            - OK
+            - NO_DATA
+            - ALERT
+            - WARN
+        muted_until:
+          type: integer
+          description: >-
+            The timestamp indicating the ending of the muting. -1 indicates
+            muted forever
+          format: int64
+          example: 1710958395538
+        notify_once:
+          type: boolean
+          description: >-
+            Notify only the groups changing the global monitor status. e.g.
+            notifications are sent only for the first group going in ALERT
+            status or for last group resolving)
+          example: false
+        group_retention:
+          type: integer
+          description: Remove groups with no data after the provided time in milliseconds
+          format: int64
+          example: 600000
+        last_trigger_ts:
+          type: integer
+          description: The timestamp of the last time the monitor fired
+          format: int64
+          example: 1710948395538
+        aux:
+          maxItems: 10
+          type: object
+          description: Additional monitor configuration
+    CreateMonitorRequest:
+      required:
+        - actions
+        - comparison_operator
+        - filter
+        - logs
+        - name
+        - stat
+        - threshold
+        - window
+      type: object
+      properties:
+        name:
+          maxLength: 255
+          minLength: 1
+          type: string
+          description: The name of the monitor
+          example: High Error Rate
+        description:
+          maxLength: 4000
+          minLength: 1
+          type: string
+          description: Extra contextual information to add to the monitor.
+          example: Average response time is over 1 seconds in the last 20 minutes
+        filter:
+          maxLength: 255
+          type: string
+          description: The filter used to identify events to monitor on.
+          example: response_time and response_status=200
+        key:
+          maxLength: 50
+          type: string
+          description: The key that identifies the numeric value to monitor
+          example: response_time
+        group_keys:
+          maxItems: 3
+          type: array
+          description: The list of keys to group by
+          example:
+            - region
+            - host
+          items:
+            type: string
+        stat:
+          type: string
+          description: The function to compute (MIN, MAX, COUNT, SUM, AVG)
+          example: AVG
+          enum:
+            - MIN
+            - MAX
+            - COUNT
+            - SUM
+            - AVG
+            - AVERAGE
+        comparison_operator:
+          type: string
+          description: >-
+            the comparison operator of the monitor (ABOVE, ABOVE_OR_EQUAL,
+            BELOW, BELOW_OR_EQUAL, EQUAL, NOT_EQUAL)
+          example: ABOVE
+          enum:
+            - BELOW
+            - BELOW_OR_EQUAL
+            - ABOVE
+            - ABOVE_OR_EQUAL
+            - EQUAL
+            - NOT_EQUAL
+        threshold:
+          type: number
+          description: the threshold value of the monitor
+          example: 1000
+        warning_threshold:
+          type: number
+          description: the warning threshold value
+          format: double
+          example: 1000
+        window:
+          maximum: 1440
+          minimum: 5
+          type: integer
+          description: >-
+            the time window, expressed in minutes, to evaluate the monitor (5
+            minutes to 1 day)
+          example: 20
+        logs:
+          maxItems: 50
+          minItems: 1
+          uniqueItems: true
+          type: array
+          description: The list of log identifiers to filter for matching events
+          items:
+            type: string
+            format: uuid
+        actions:
+          maxItems: 10
+          minItems: 1
+          type: array
+          description: >-
+            The list on actions (notifications) to take when the monitor fires
+            or resolves
+          items:
+            $ref: '#/components/schemas/Action'
+        no_data_status:
+          type: string
+          description: >-
+            Specify the status to use if a group has no data (no events matched
+            in a time window)
+          example: OK
+          enum:
+            - OK
+            - NO_DATA
+            - ALERT
+            - WARN
+        notify_once:
+          type: boolean
+          description: >-
+            Notify only the groups changing the global monitor status. e.g.
+            notifications are sent only for the first group going in ALERT
+            status or for last group resolving)
+          example: false
+        group_retention:
+          maximum: 604800000
+          minimum: 0
+          type: integer
+          description: Remove groups with no data after the provided time in milliseconds
+          format: int64
+          example: 600000
+        aux:
+          maxItems: 10
+          type: object
+          description: Additional monitor configuration
+    SendTestNotificationsRequest:
+      required:
+        - actions
+        - comparison_operator
+        - filter
+        - name
+        - stat
+        - state_transitions
+        - threshold
+        - window
+      type: object
+      properties:
+        name:
+          maxLength: 255
+          minLength: 1
+          type: string
+          description: The name of the monitor
+          example: High Error Rate
+        description:
+          maxLength: 4000
+          type: string
+          description: Extra contextual information to add to the monitor.
+          example: Average response time is over 1 seconds in the last 20 minutes
+        filter:
+          maxLength: 255
+          type: string
+          description: The filter used to identify events to monitor on.
+          example: response_time and response_status=200
+        key:
+          maxLength: 50
+          type: string
+          description: The key that identifies the numeric value to monitor
+          example: response_time
+        group_by_keys:
+          maxLength: 3
+          type: array
+          description: The list of keys to group by
+          example:
+            - region
+            - host
+          items:
+            type: string
+        stat:
+          type: string
+          description: The function to compute (MIN, MAX, COUNT, SUM, AVG)
+          example: AVG
+          enum:
+            - MIN
+            - MAX
+            - COUNT
+            - SUM
+            - AVG
+            - AVERAGE
+        comparison_operator:
+          type: string
+          description: >-
+            the comparison operator of the monitor (ABOVE, ABOVE_OR_EQUAL,
+            BELOW, BELOW_OR_EQUAL, EQUAL, NOT_EQUAL)
+          example: ABOVE
+          enum:
+            - BELOW
+            - BELOW_OR_EQUAL
+            - ABOVE
+            - ABOVE_OR_EQUAL
+            - EQUAL
+            - NOT_EQUAL
+        threshold:
+          type: number
+          description: the threshold value of the monitor
+          format: double
+          example: 1000
+        warning_threshold:
+          type: number
+          description: the warning threshold value
+          format: double
+          example: 900
+        window:
+          type: integer
+          description: the time window, expressed in minutes, to evaluate the monitor
+          example: 20
+        actions:
+          maxItems: 10
+          minItems: 1
+          type: array
+          description: >-
+            The list on actions (notifications) to take when the monitor fires
+            or resolves
+          items:
+            $ref: '#/components/schemas/Action'
+        state_transitions:
+          minItems: 1
+          type: array
+          description: The state transitions to test
+          example:
+            - ALERT
+            - ALERT_RECOVERY
+          items:
+            type: string
+            enum:
+              - ALERT
+              - WARN
+              - ALERT_RECOVERY
+              - WARN_RECOVERY
+              - ALERT_TO_WARN
+              - NO_DATA
+              - NO_DATA_RECOVERY
+        group:
+          type: string
+          description: Specify the group you want to send notifications for
+          example: host:web1,region:eu
+    UpdateMonitorRequest:
+      required:
+        - actions
+        - comparison_operator
+        - filter
+        - logs
+        - name
+        - stat
+        - threshold
+        - window
+      type: object
+      properties:
+        name:
+          maxLength: 255
+          minLength: 1
+          type: string
+          description: The name of the monitor
+          example: High Error Rate
+        description:
+          maxLength: 4000
+          minLength: 1
+          type: string
+          description: Extra contextual information to add to the monitor.
+          example: Average response time is over 1 seconds in the last 20 minutes
+        filter:
+          maxLength: 255
+          type: string
+          description: The filter used to identify events to monitor on.
+          example: response_time and response_status=200
+        key:
+          maxLength: 50
+          type: string
+          description: The key that identifies the numeric value to monitor
+          example: response_time
+        group_keys:
+          maxItems: 3
+          type: array
+          description: The list of keys to group by
+          example:
+            - region
+            - host
+          items:
+            type: string
+        stat:
+          type: string
+          description: The function to compute (MIN, MAX, COUNT, SUM, AVG)
+          example: AVG
+          enum:
+            - MIN
+            - MAX
+            - COUNT
+            - SUM
+            - AVG
+            - AVERAGE
+        comparison_operator:
+          type: string
+          description: >-
+            the comparison operator of the monitor (ABOVE, ABOVE_OR_EQUAL,
+            BELOW, BELOW_OR_EQUAL, EQUAL, NOT_EQUAL)
+          example: ABOVE
+          enum:
+            - BELOW
+            - BELOW_OR_EQUAL
+            - ABOVE
+            - ABOVE_OR_EQUAL
+            - EQUAL
+            - NOT_EQUAL
+        threshold:
+          type: number
+          description: the threshold value of the monitor
+          example: 1000
+        warning_threshold:
+          type: number
+          description: the warning threshold value
+          format: double
+          example: 1000
+        window:
+          maximum: 1440
+          minimum: 5
+          type: integer
+          description: >-
+            the time window, expressed in minutes, to evaluate the monitor (5
+            minutes to 1 day)
+          example: 20
+        logs:
+          maxItems: 50
+          minItems: 1
+          uniqueItems: true
+          type: array
+          description: The list of log identifiers to filter for matching events
+          items:
+            type: string
+            format: uuid
+        actions:
+          maxItems: 10
+          minItems: 1
+          type: array
+          description: >-
+            The list on actions (notifications) to take when the monitor fires
+            or resolves
+          items:
+            $ref: '#/components/schemas/Action'
+        no_data_status:
+          type: string
+          description: >-
+            Specify the status to use in case of no data (no events matched in a
+            time window)
+          example: OK
+          enum:
+            - OK
+            - NO_DATA
+            - ALERT
+            - WARN
+        notify_once:
+          type: boolean
+          description: >-
+            Notify only the groups changing the global monitor status. e.g.
+            notifications are sent only for the first group going in ALERT
+            status or for last group resolving)
+          example: false
+        group_retention:
+          maximum: 604800000
+          minimum: 0
+          type: integer
+          description: Remove groups with no data after the provided time in milliseconds
+          format: int64
+          example: 600000
+        aux:
+          maxItems: 10
+          type: object
+          description: Additional monitor configuration
+    MonitorEvent:
+      required:
+        - monitor_id
+        - monitor_status
+        - time
+      type: object
+      properties:
+        monitor_id:
+          type: string
+          description: The unique identifier for the monitor
+          format: uuid
+        time:
+          type: number
+          description: The unix time in milliseconds of when the event happened
+          format: int64
+          example: 1724336885000
+        monitor_status:
+          type: string
+          description: the new status of the monitor after this event
+          example: OK
+          enum:
+            - OK
+            - ALERT
+            - WARN
+            - NO_DATA
+        previous_status:
+          type: string
+          description: the previous status of the monitor
+          example: OK
+          enum:
+            - OK
+            - ALERT
+            - WARN
+            - NO_DATA
+        message:
+          type: string
+          description: a short message that explain the events
+          example: The monitor has been resolved
+    MuteMonitorRequest:
+      required:
+        - mute_until
+      type: object
+      properties:
+        mute_until:
+          type: integer
+          description: >-
+            The timestamp indicating the ending of the muting. -1 indicates
+            muted forever, 0 to unmute
+          format: int64
+          example: 1710958395538
+    ForwardConfig:
+      required:
+        - all_logs
+        - compression
+        - created_at
+        - destination
+        - id
+        - name
+      type: object
+      properties:
+        id:
+          type: string
+          description: unique identifier for the config
+          format: uuid
+        name:
+          maxLength: 255
+          minLength: 1
+          type: string
+          description: The name of the config
+          example: Archive data to S3
+        description:
+          maxLength: 1000
+          type: string
+          description: Extra contextual information to add to the forward config.
+          example: Sending data to S3 for long term store
+        filter:
+          maxLength: 255
+          type: string
+          description: Optional filter to forward only some events and discard others
+          example: level='ERROR' or level='WARN'
+        compression:
+          type: string
+          description: The compression to use to reduce the payload size
+          default: ZSTD
+          enum:
+            - ZSTD
+            - GZIP
+            - NONE
+        all_logs:
+          type: boolean
+          description: >-
+            True to forward all logs, logs created in future will be
+            automatically forwarded
+        log_ids:
+          maxLength: 250
+          type: array
+          description: >-
+            The list of log ids to forward. Required if all_logs is set to
+            false, ignored if all_logs is set to true
+          items:
+            type: string
+        max_payload_size_bytes:
+          maximum: 1000000000
+          minimum: 1000000
+          type: number
+          description: >-
+            The max size of the payload in bytes, before compression. Payload of
+            smaller size can be delivered by the system
+          format: int32
+          example: 10000000
+          default: 10000000
+        max_payload_size_events:
+          maximum: 1000000000
+          minimum: 1000
+          type: number
+          description: >-
+            The max number of log events in a payload. Payloads with less events
+            can be delivered by the system
+          format: int32
+          example: 1000
+          default: 1000000
+        max_buffer_time_ms:
+          maximum: 86400000
+          minimum: 60000
+          type: number
+          description: >-
+            The maximum time waited by the system while buffering events to
+            build a payload.
+          format: int32
+          example: 300000
+          default: 300000
+        destination:
+          $ref: '#/components/schemas/ForwardConfigDestination'
+        created_at:
+          type: integer
+          description: The timestamp when the config was created
+          format: int64
+          example: 1710948395538
+    ForwardConfigRequest:
+      required:
+        - all_logs
+        - compression
+        - destination
+        - name
+      type: object
+      properties:
+        name:
+          maxLength: 255
+          minLength: 1
+          type: string
+          description: The name of the config
+          example: Archive data to S3
+        description:
+          maxLength: 1000
+          type: string
+          description: Extra contextual information to add to the forward config.
+          example: Sending data to S3 for long term store
+        filter:
+          maxLength: 255
+          type: string
+          description: Optional filter, to forward only some events and discard others
+          example: level='ERROR' or level='WARN'
+        compression:
+          type: string
+          description: >-
+            The compression algorithm to use, to reduce the payload size (ZSTD
+            recommended)
+          default: ZSTD
+          enum:
+            - ZSTD
+            - GZIP
+            - NONE
+        all_logs:
+          type: boolean
+          description: >-
+            True to forward all logs, logs created in future will be
+            automatically forwarded
+        log_ids:
+          maxLength: 250
+          type: array
+          description: >-
+            The list of log ids to forward. Required if all_logs is set to
+            false, ignored if all_logs is set to true
+          items:
+            type: string
+        max_payload_size_bytes:
+          maximum: 1000000000
+          minimum: 1000000
+          type: number
+          description: >-
+            The max size of the payload in bytes, before compression. Payload of
+            smaller size can be delivered by the system
+          format: int32
+          example: 10000000
+          default: 10000000
+        max_payload_size_events:
+          maximum: 1000000000
+          minimum: 1000
+          type: number
+          description: >-
+            The max number of log events in a payload. Payloads with less events
+            can be delivered by the system
+          format: int32
+          example: 1000
+          default: 1000000
+        max_buffer_time_ms:
+          maximum: 86400000
+          minimum: 60000
+          type: number
+          description: >-
+            The maximum time waited by the system while buffering events to
+            build a payload
+          format: int32
+          example: 300000
+          default: 300000
+        destination:
+          $ref: '#/components/schemas/ForwardConfigDestination'
+    ForwardConfigDestination:
+      required:
+        - bucket
+        - destination_type
+      type: object
+      properties:
+        destination_type:
+          type: string
+          description: The destination type. Only S3 currently supported
+          example: S3
+          enum:
+            - S3
+        bucket:
+          maxLength: 255
+          type: string
+          description: The bucket name
+          example: my-archive-bucket
+        prefix:
+          maxLength: 255
+          type: string
+          description: The key prefix for S3 objects
+          example: bronto/archives/
+        storage_class:
+          type: string
+          description: The S3 storage class to use for the objects
+          example: STANDARD
+          default: STANDARD
+          enum:
+            - STANDARD
+            - STANDARD_IA
+            - GLACIER_IR
+    Role:
+      type: object
+      properties:
+        role_id:
+          type: string
+          description: The ID of the role
+        role_type:
+          type: string
+          description: The entity which the roles can be applied to. USER | API
+        display_name:
+          type: string
+          description: The display name of the role
+        description:
+          type: string
+          description: Description of the role
+        permissions:
+          type: array
+          items:
+            type: object
+            properties:
+              group_name:
+                type: string
+                description: The group name of the permission
+              group_display_name:
+                type: string
+                description: The display name of the permission group
+              name:
+                type: string
+                description: The name of the permission
+              display_name:
+                type: string
+                description: The display name of the permission
+              description:
+                type: string
+                description: Description of the permission
+              type:
+                type: string
+                description: The type of permission (e.g., read, write, delete)
+              restricted:
+                type: boolean
+                description: Indicates if the permission is restricted
+    CreateRoleRequest:
+      type: object
+      properties:
+        role_type:
+          type: string
+          description: The entity which the roles can be applied to. USER | API
+        display_name:
+          type: string
+          description: The display name of the role
+        description:
+          type: string
+          description: Description of the role
+        permissions:
+          type: array
+          description: Updated list of permissions.
+          example:
+            - tag_write
+            - tag_read
+            - tag_delete
+          items:
+            type: string
+    UpdateRoleRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The ID of the role
+        role_type:
+          type: string
+          description: The entity which the roles can be applied to. USER | API
+        display_name:
+          type: string
+          description: The display name of the role
+        description:
+          type: string
+          description: Description of the role
+        permissions:
+          type: array
+          description: Updated list of permissions.
+          example:
+            - tag_write
+            - tag_read
+            - tag_delete
+          items:
+            type: string
+    SubscriptionsResponse:
+      required:
+        - subscriptions
+      type: object
+      properties:
+        subscriptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Subscription'
+    Subscription:
+      required:
+        - current_period_end
+        - current_period_start
+        - ingestion_limit_bytes_monthly
+        - interval_count
+        - interval_frq
+        - product
+        - status
+      type: object
+      properties:
+        description:
+          type: string
+          description: A description of the organisations subscription
+        payment_method:
+          type: string
+          description: Describes the payment method for the organisation
+        product:
+          $ref: '#/components/schemas/Product'
+        status:
+          type: string
+          example: canceled
+          enum:
+            - incomplete
+            - incomplete_expired
+            - trialing
+            - active
+            - past_due
+            - canceled
+            - unpaid
+            - paused
+        ingestion_limit_bytes_monthly:
+          type: integer
+          description: The total amount of bytes that can be ingested per month
+          example: 10000000000000
+        current_period_start:
+          type: integer
+          description: >-
+            Unix timestamp for start of the current period (in epoc time) that
+            the subscription has been invoiced for.
+          example: 1709645437
+        current_period_end:
+          type: integer
+          description: >-
+            Unix timestamp for end of the current period that the subscription
+            has been invoiced for.
+          example: 1717594237
+        interval_frq:
+          type: string
+          example: month
+          enum:
+            - month
+            - year
+        interval_count:
+          type: integer
+          description: >-
+            The number of intervals (specified in the interval_frq attribute)
+            between subscription billings. For example, interval_frq=month and
+            interval_count=3 bills every 3 months.
+          example: 3
+    TopKeys:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/TopKeysPerLog'
+    CreateLbmRequest:
+      required:
+        - logs
+        - name
+        - stat
+      type: object
+      properties:
+        name:
+          maxLength: 64
+          minLength: 1
+          type: string
+          description: The name of the dashboard meta to create
+          example: My Dashboard
+        logs:
+          minItems: 1
+          type: array
+          items:
+            type: string
+            format: uuid
+        stat:
+          type: string
+          example: count
+        filter:
+          type: string
+        key:
+          type: string
+          example: duration_millis
+        group_keys:
+          type: array
+          example:
+            - host
+            - status
+          items:
+            type: string
+        aux:
+          type: object
+          description: Auxiliary data for the metric
+          example:
+            region: us-west-1
+            service: s3
+    MetricItem:
+      required:
+        - filter
+        - id
+        - key
+        - logs
+        - name
+        - series
+        - stat
+        - total_count
+        - total_value
+      type: object
+      properties:
+        id:
+          type: string
+          example: 550e8400-e29b-41d4-a716-446655440000#home#usage
+        name:
+          type: string
+          example: Usage
+        filter:
+          type: string
+          example: resource='search'
+        stat:
+          type: string
+          example: p90
+        key:
+          type: string
+          example: duration_millis
+        logs:
+          type: array
+          example:
+            - 41521f35-1b06-41f0-9cdc-9a938b5739d1
+          items:
+            type: string
+            format: uuid
+        aux:
+          type: object
+          description: Auxiliary data for the metric
+          example:
+            region: us-west-1
+            service: s3
+        total_count:
+          type: integer
+          example: 58351920
+        total_value:
+          type: number
+          example: 18911006109
+        total_quantiles:
+          type: object
+          description: >
+            Statistical distribution of the metric values represented by key
+            quantiles:
+
+            - **min**: The minimum observed value.
+
+            - **p25**: The 25th percentile (first quartile).
+
+            - **p50**: The 50th percentile (median).
+
+            - **p75**: The 75th percentile (third quartile).
+
+            - **p90**: The 90th percentile.
+
+            - **p95**: The 95th percentile.
+
+            - **p99**: The 99th percentile.
+
+            - **p999**: The 99.9th percentile, highlighting extreme outliers.
+
+            - **max**: The maximum observed value.
+          example:
+            min: 691
+            p25: 713.75
+            p50: 796
+            p75: 847.5
+            p90: 1237
+            p95: 1331
+            p99: 1331
+            p999: 1331
+            max: 1331
+        is_exact:
+          type: boolean
+          description: true if the series result is exact, false if it is an approximation
+          example: true
+        series:
+          type: array
+          items:
+            $ref: '#/components/schemas/SeriesItem'
+        groupSeries:
+          type: array
+          deprecated: true
+          items:
+            $ref: '#/components/schemas/GroupSeries'
+        groups_series:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupSeriesItem'
+        delta:
+          $ref: '#/components/schemas/MetricDelta'
+    Widget:
+      type: object
+      properties:
+        id:
+          type: string
+          example: cc5d32d7-2bd5-4ede-b86e-0a06db8db877
+        name:
+          type: string
+          description: The name of the Widget.
+          example: 5xx errors by service
+        description:
+          type: string
+          description: A description of the widget
+          example: This widget shows the 5xx errors by service
+        created_at:
+          type: integer
+          description: The Unix timestamp when the widget was created.
+          example: 1703112000000
+        type:
+          type: string
+          description: The type of the Widget.
+          enum:
+            - line
+            - bar
+            - area
+            - score
+            - pie
+            - treemap
+            - top-list
+        metric_ids:
+          type: array
+          description: the metric IDs associated with the widget
+          example:
+            - c957e259-7543-465e-b44b-6e3aac07d90a
+            - a86f1faa-6698-4b08-a78b-23608020dfba
+          items:
+            type: string
+            format: uuid
+        widget_ids:
+          type: array
+          description: the widgets IDs associated with the widget
+          example:
+            - c957e259-7543-465e-b44b-6e3aac07d90a
+            - a86f1faa-6698-4b08-a78b-23608020dfba
+          items:
+            type: string
+            format: uuid
+        layout:
+          type: object
+          properties:
+            widget_layouts:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The unique identifier of the widget id in the layout
+                    format: uuid
+                    example: 78739235-9aa7-4eca-b7f3-4cf6ee455b8f
+                  x:
+                    type: number
+                    description: The x coordinate
+                    example: 1.25
+                  'y':
+                    type: number
+                    description: The y coordinate
+                    example: 2
+                  w:
+                    type: number
+                    description: The width
+                    example: 20
+                  h:
+                    type: number
+                    description: The height
+                    example: 5
+          description: The layout of the widget
+          example:
+            widget_layouts:
+              - id: 78739235-9aa7-4eca-b7f3-4cf6ee455b8f
+                x: 1.25
+                'y': 2
+                w: 20
+                h: 5
+        tags:
+          $ref: '#/components/schemas/Tags'
+    WidgetRequest:
+      required:
+        - name
+      type: object
+      properties:
+        name:
+          maxLength: 255
+          minLength: 1
+          type: string
+          description: The widget name
+          example: 5xx errors by service
+        description:
+          maxLength: 1024
+          minLength: 1
+          type: string
+          description: The widget description
+          example: This widget shows the 5xx errors by service
+        type:
+          maxLength: 64
+          minLength: 1
+          type: string
+          description: The widget type
+          example: treemap
+        aux:
+          maxItems: 10
+          type: object
+          description: Additional widget configuration
+        metric_ids:
+          maxItems: 20
+          minItems: 0
+          type: array
+          description: >
+            The metric IDs associated with the widget. A widget can include
+            either metrics or widgets, but not both.
+          example:
+            - c957e259-7543-465e-b44b-6e3aac07d90a
+            - a86f1faa-6698-4b08-a78b-23608020dfba
+          items:
+            type: string
+        widget_ids:
+          maxItems: 50
+          minItems: 0
+          type: array
+          description: >
+            The widget IDs associated with the widget. A widget can include
+            either metrics or widgets, but not both.
+          example:
+            - c957e259-7543-465e-b44b-6e3aac07d90a
+            - a86f1faa-6698-4b08-a78b-23608020dfba
+          items:
+            type: string
+    Dashboard:
+      required:
+        - name
+      type: object
+      properties:
+        dashboard_id:
+          type: string
+          example: xyz
+        name:
+          type: string
+          description: The name of the Dashboard.
+        created:
+          type: string
+          description: The created date of the dashboard (epoch)
+          example: '1711726414'
+        widgets:
+          type: array
+          items:
+            $ref: '#/components/schemas/Widget'
+        layout:
+          type: object
+          properties:
+            metric_ids:
+              type: object
+              description: List of associated lbms
+              example:
+                - x
+                - 'y'
+                - x
+          example:
+            metric_ids:
+              - x
+              - 'y'
+              - x
+        tags:
+          $ref: '#/components/schemas/Tags'
+    CreateDashboardRequest:
+      required:
+        - name
+      type: object
+      properties:
+        dashboard_id:
+          type: string
+          example: xyz
+        name:
+          type: string
+          description: The name of the Dashboard.
+          example: ExamplePlan
+        created:
+          type: string
+          description: The created date of the dashboard (epoch)
+          example: '1711726414'
+        layout:
+          type: object
+          properties:
+            metric_ids:
+              type: object
+              description: List of associated lbms
+              example:
+                - x
+                - 'y'
+                - x
+          example:
+            metric_ids:
+              - x
+              - 'y'
+              - x
+      example:
+        name: name
+    ListMetricsResponse:
+      type: object
+      properties:
+        meta:
+          $ref: '#/components/schemas/Meta'
+        result:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricItem'
+    UsageByLogId:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Usage
+        filter:
+          type: string
+          example: event_type='log_usage'
+        stat:
+          type: string
+          example: SUM
+        key:
+          type: string
+          example: bytes_total
+        is_exact:
+          type: boolean
+          description: true if the series result is exact, false if it is an approximation
+          example: true
+        groups_series:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupSeriesItem'
+    CostByLogId:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Usage
+        filter:
+          type: string
+          example: event_type='log_usage'
+        key:
+          type: string
+          example: bytes_total
+        is_exact:
+          type: boolean
+          description: true if the series result is exact, false if it is an approximation
+          example: true
+        groups_series:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupSeriesItem'
+    Insight:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the insight
+          format: uuid
+        entity_id:
+          type: string
+          description: The entity id for which the insight applies to
+          format: uuid
+        entity_type:
+          type: string
+          description: The entity type for which the insight applies to
+          enum:
+            - log
+        name:
+          type: string
+          description: The name of the insight
+          enum:
+            - debug_logs_received
+            - parser_config_mismatch
+        category:
+          type: string
+          description: The category the insight applies to
+          enum:
+            - verbose_logging
+        description:
+          type: string
+          description: A brief message explaining the insight
+          example: Debug logging is enabled
+        created_at:
+          type: integer
+          description: Unix timestamp for when the insight was created
+          format: int64
+        modified_at:
+          type: integer
+          description: Unix timestamp for when the insight was last updated at
+          format: int64
+    WebhookIntegrationResource:
+      required:
+        - id
+        - name
+        - url
+      type: object
+      properties:
+        id:
+          type: string
+          description: A unique identifier for the integration resource
+          example: 550e8400-e29b-41d4-a716-446655440000
+        name:
+          maxLength: 255
+          minLength: 1
+          type: string
+          description: The webhook name
+          example: my-slack-webhook
+        url:
+          maxLength: 255
+          minLength: 10
+          type: string
+          description: The webhook url
+          example: https://hooks.slack.com/triggers/xxxx/123456745
+        custom_headers:
+          maxProperties: 10
+          type: object
+          additionalProperties:
+            type: string
+          description: The custom headers to include in the webhook request
+          example:
+            x-bronto-api-key: xxxxx
+        payload:
+          maxLength: 2048
+          minLength: 0
+          type: string
+          description: The wanted payload structure
+          example: >-
+            {"name":"$title", "message": "$description", "details":{"id":
+            "$alert_id"}}
+    CreateWebhookIntegrationResourceRequest:
+      required:
+        - name
+        - url
+      type: object
+      properties:
+        name:
+          maxLength: 255
+          minLength: 1
+          type: string
+          description: The webhook name
+          example: my-slack-webhook
+        url:
+          maxLength: 255
+          minLength: 10
+          type: string
+          description: The webhook url
+          example: https://hooks.slack.com/triggers/xxxx/123456745
+        custom_headers:
+          maxProperties: 10
+          type: object
+          additionalProperties:
+            type: string
+          description: The custom headers to include in the webhook request
+          example:
+            x-bronto-api-key: xxxxx
+        payload:
+          maxLength: 2048
+          minLength: 0
+          type: string
+          description: The wanted payload structure
+          example: >-
+            {"name":"$title", "message": "$description", "details":{"id":
+            "$alert_id"}}
+    UpdateWebhookIntegrationRequest:
+      required:
+        - name
+        - url
+      type: object
+      properties:
+        name:
+          maxLength: 255
+          minLength: 1
+          type: string
+          description: The webhook name
+          example: my-slack-webhook
+        url:
+          maxLength: 255
+          minLength: 10
+          type: string
+          description: The webhook url
+          example: https://hooks.slack.com/triggers/xxxx/123456745
+        custom_headers:
+          maxProperties: 10
+          type: object
+          additionalProperties:
+            type: string
+          description: The custom headers to include in the webhook request
+          example:
+            x-bronto-api-key: xxxxx
+        payload:
+          maxLength: 2048
+          minLength: 0
+          type: string
+          description: The wanted payload structure
+          example: >-
+            {"name":"$title", "message": "$description", "details":{"id":
+            "$alert_id"}}
+    AWSIntegrationResource:
+      required:
+        - resource
+        - resource_id
+      type: object
+      properties:
+        resource_id:
+          type: string
+          description: A unique identifier for the integration resource
+          example: 550e8400-e29b-41d4-a716-446655440000
+        resource:
+          maxLength: 20
+          minLength: 5
+          type: string
+          description: The integration resource
+          example: ab0123456789
+        resource_region:
+          maxLength: 20
+          minLength: 5
+          type: string
+          description: The region of the resource
+          example: eu-west-1
+    CreateAWSIntegrationResourceRequest:
+      required:
+        - resource
+      type: object
+      properties:
+        resource:
+          maxLength: 20
+          minLength: 5
+          type: string
+          description: The integration resource
+          example: bronto-s3-access-logs-eu-west-1
+        resource_region:
+          maxLength: 20
+          minLength: 5
+          type: string
+          description: The region of the resource
+          example: eu-west-1
+    SavedSearch:
+      required:
+        - log_ids
+        - name
+        - search_details
+      type: object
+      properties:
+        saved_search_id:
+          type: string
+          description: The unique identifier for the saved search.
+        user_id:
+          type: string
+          description: The ID of the user who created or owns the saved search.
+        created_by:
+          type: string
+          description: The name or identifier of the user who created the saved search.
+        name:
+          type: string
+          description: The name of the saved search.
+        search_details:
+          $ref: '#/components/schemas/SearchDetails'
+        log_ids:
+          type: array
+          description: List of IDs of logs associated with the saved search.
+          items:
+            type: string
+        created_at:
+          type: integer
+          description: The timestamp when the saved search was created.
+          format: int64
+        modified_at:
+          type: integer
+          description: The timestamp when the saved search was last modified.
+          format: int64
+    CreateSavedSearchRequest:
+      required:
+        - created_by
+        - log_ids
+        - name
+        - search_details
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the saved search.
+        created_by:
+          type: string
+          description: The name or identifier of the user who created the saved search.
+        search_details:
+          $ref: '#/components/schemas/SearchDetails'
+        log_ids:
+          type: array
+          description: List of IDs of logs associated with the saved search.
+          items:
+            type: string
+    UpdateSavedSearchRequest:
+      required:
+        - log_ids
+        - name
+        - search_details
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the saved search.
+        search_details:
+          $ref: '#/components/schemas/SearchDetails'
+        log_ids:
+          type: array
+          description: List of IDs of logs associated with the saved search.
+          items:
+            type: string
+    Idp:
+      required:
+        - accept_idp_initiated
+        - attribute_mappings
+        - provider
+      type: object
+      properties:
+        name:
+          maxLength: 255
+          minLength: 1
+          type: string
+          description: The name of the identity provider
+          example: Google
+        provider:
+          type: string
+          description: The federated sign-in option, currently only SAML is supported
+          example: '[SAML]'
+          enum:
+            - SAML
+        identifiers:
+          type: array
+          description: >-
+            An identifier allows the email address domain to be used to redirect
+            a user to the sign-in identity provider
+          example:
+            - bronto.io
+            - bronto.com
+          items:
+            type: string
+        accept_idp_initiated:
+          type: boolean
+          description: >-
+            When enabled your sign-in session can be initiated from your
+            identify provider. This is not recommended as you might be subject
+            to attacks like spoofing and cross-site request forgery.
+          example: false
+        app_client_id:
+          type: string
+          description: >-
+            This is the aws cognito application client id which is required to
+            build the start url
+          example: 4s25sufdsie21brgq2kt5cs9dj
+        attribute_mappings:
+          type: array
+          description: Map your identity provider attributes to bronto user attributes
+          items:
+            required:
+              - provider_attr
+              - user_attr
+            type: object
+            properties:
+              provider_attr:
+                type: string
+                description: The value from the identity provider to map from
+                example: givenname
+              user_attr:
+                type: string
+                description: The Bronto user value to map to
+                example: name
+    CreateIdp:
+      required:
+        - attribute_mappings
+        - meta_cert
+        - name
+        - provider
+      type: object
+      properties:
+        name:
+          maxLength: 255
+          minLength: 1
+          type: string
+          description: The name of the identity provider
+          example: Google
+        provider:
+          type: string
+          description: The federated sign-in option, currently only SAML is supported
+          example: '[SAML]'
+          enum:
+            - SAML
+        identifiers:
+          type: array
+          description: >-
+            An identifier allows the email address domain to be used to redirect
+            a user to the sign-in identity provider
+          example:
+            - bronto.io
+            - bronto.com
+          items:
+            type: string
+        meta_cert:
+          type: string
+          example: >
+            <?xml version="1.0" encoding="UTF-8"?><md:EntityDescriptor
+            xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
+            entityID="https://accounts.google.com/o/saml2?idpid=C01jymidw"
+            validUntil="2029-04-12T22:46:45.000Z">
+
+            <md:IDPSSODescriptor WantAuthnRequestsSigned="false"
+            protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+
+            <md:KeyDescriptor use="signing">
+
+            <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+
+            <ds:X509Data>
+
+            <ds:X509Certificate>MIIDdDCCAlygAwIBAgIGAY7ZpEbbMA0GCSqGSIb3DQEBCwUAMHsxFDASBgNVBAoTC0dvb2dsZSBJ
+
+            bmMuMRYwFAYDVQQHEw1Nb3VudGFpbiBWaWV3MQ8wDQYDVQQDEwZHb29nbGUxGDAWBgNVBAsTD0dv
+
+            b2dsZSBGb3IgV29yazELMAkGA1UEBhMCVVMxEzARBgNVBAgTCkNhbGlmb3JuaWEwHhcNMjQwNDEz
+
+            MjI0NjQ1WhcNMjkwNDEyMjI0NjQ1WjB7MRQwEgYDVQQKEwtHb29nbGUgSW5jLjEWMBQGA1UEBxMN
+
+            TW91bnRhaW4gVmlldzEPMA0GA1UEAxMGR29vZ2xlMRgwFgYDVQQLEw9Hb29nbGUgRm9yIFdvcmsx
+
+            CzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpDYWxpZm9ybmlhMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A
+
+            MIIBCgKCAQEAsDqPFRfSy7ONRUWFDATezoJdcGJiGCSQfxB4Y/H5Zs2CZUhr3OoIDYdMJK3Z0C6O
+
+            0jJ7qSWcTSkVrBd8B/+nHGUIpvsK2p1tnQK7wbPh5JArTWcIvS54XMAH6zDG7e0jCYdLtU4hsyXa
+
+            ywPwj1z+9c5l/f79jt53vKe+Nbrtuoy/b1GOQMsw/BOB9zKs4YWN8ktI05ZXB2otiEWAoxUoTCrz
+
+            D/T6tXUkh1mfOQQQqmM9T2y5Iiptx++1V2K5Xw6Hvlx8Xeh5sdeRUJOnzVFd45aWeq7J/PdOOSkF
+
+            FqHDF4b1i7ClrgkVXtVct4oDwJEA+1Ha7amXZhn1+Wf8FNE2JQIDAQABMA0GCSqGSIb3DQEBCwUA
+
+            A4IBAQAzF4OieKvOWePk16g6dNYoUAE0bz47WwQJpbGwpjLB+74iiB4ob0AieoAUFfHhVTqP7nnt
+
+            YA0J3FZhNU8RhXO0GQvRTPJR3pJ5+6YrTblVjJELmDfT8CIAq5wDTAqx+0bol5JgiYyTC4WZzSSB
+
+            m+MYPvcvvzInBvyWBWe9F1vE98YSOeX0ds12sSGyCL+bauejqYxexlyqgsT9rqamH25NXwZCk9qE
+
+            x9dmZlsodGQZYqigRkE1Bve2u0iaTayZ8XB9wXXKvBQuPLjTQ/V/rqjJSp7va/5I76Gb74drD+WL
+
+            DjZqEZBwPfOWcjUL7OhJV/mwQsuCfEYrpcs5d+1CRaQp</ds:X509Certificate>
+
+            </ds:X509Data>
+
+            </ds:KeyInfo>
+
+            </md:KeyDescriptor>
+
+            <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
+
+            <md:SingleSignOnService
+            Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+            Location="https://accounts.google.com/o/saml2/idp?idpid=C01jymidw"/>
+
+            <md:SingleSignOnService
+            Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+            Location="https://accounts.google.com/o/saml2/idp?idpid=C01jymidw"/>
+
+            </md:IDPSSODescriptor>
+
+            </md:EntityDescriptor>
+        accept_idp_initiated:
+          type: boolean
+          description: >-
+            When enabled your sign-in session can be initiated from your
+            identify provider. This is not recommended as you might be subject
+            to attacks like spoofing and cross-site request forgery.
+          example: false
+        attribute_mappings:
+          type: array
+          description: Map your identity provider attributes to bronto user attributes
+          items:
+            required:
+              - provider_attr
+              - user_attr
+            type: object
+            properties:
+              provider_attr:
+                type: string
+                description: The value from the identity provider to map from
+                example: givenname
+              user_attr:
+                type: string
+                description: The Bronto user value to map to
+                example: name
+    UpdateIdp:
+      type: object
+      properties:
+        provider:
+          type: string
+          description: The federated sign-in option, currently only SAML is supported
+          example: '[SAML]'
+          enum:
+            - SAML
+        identifiers:
+          type: array
+          description: >-
+            An identifier allows the email address domain to be used to redirect
+            a user to the sign-in identity provider
+          example:
+            - bronto.io
+            - bronto.com
+          items:
+            type: string
+        meta_cert:
+          type: string
+          example: >
+            <EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata"
+            entityID="https://your-saml-idp.com/">
+              <IDPSSODescriptor>
+                <KeyDescriptor use="signing">
+                  <KeyInfo xmlns="http://www.w3.org/2000/09/xmldsig#">
+                    <X509Data>
+                      <X509Certificate>MIIC+TCC...</X509Certificate>
+                    </X509Data>
+                  </KeyInfo>
+                </KeyDescriptor>
+                <SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://your-saml-idp.com/sso"/>
+              </IDPSSODescriptor>
+            </EntityDescriptor>
+        accept_idp_initiated:
+          type: boolean
+          description: >-
+            When enabled your sign-in session can be initiated from your
+            identify provider. This is not recommended as you might be subject
+            to attacks like spoofing and cross-site request forgery.
+          example: false
+        attribute_mappings:
+          type: array
+          description: Map your identity provider attributes to bronto user attributes
+          items:
+            required:
+              - provider_attr
+              - user_attr
+            type: object
+            properties:
+              provider_attr:
+                type: string
+                description: The value from the identity provider to map from
+                example: givenname
+              user_attr:
+                type: string
+                description: The Bronto user value to map to
+                example: name
+    SsoMappings:
+      required:
+        - mappings
+      type: object
+      properties:
+        mappings:
+          type: array
+          description: Map your identity provider attributes to bronto role or group
+          items:
+            $ref: '#/components/schemas/SsoMapping'
+    Export:
+      required:
+        - bytes
+        - events
+        - export_id
+        - location
+        - org_id
+        - progress
+        - search_details
+        - status
+      type: object
+      properties:
+        export_id:
+          type: string
+          description: The unique identifier for the export.
+        org_id:
+          type: string
+          description: The ID of the organization associated with the export.
+        progress:
+          type: integer
+          description: The progress percentage of the export.
+        status:
+          type: string
+          description: The current status of the export.
+          enum:
+            - CREATED
+            - IN_PROGRESS
+            - COMPLETE
+        bytes:
+          type: integer
+          description: The size of the export in bytes.
+        events:
+          type: integer
+          description: The number of events in the export.
+        location:
+          type: string
+          description: The location where the export is stored.
+        search_details:
+          $ref: '#/components/schemas/ExportDetails'
+        created_at:
+          type: integer
+          description: The timestamp when the export was created.
+          format: int64
+        modified_at:
+          type: integer
+          description: The timestamp when the export was last modified.
+          format: int64
+    CreateExportRequest:
+      required:
+        - search_details
+      type: object
+      properties:
+        search_details:
+          $ref: '#/components/schemas/ExportDetails'
+    Customers:
+      required:
+        - billing_emails
+        - created_at
+        - customer_id
+        - customer_name
+        - org_id
+        - updated_at
+      type: object
+      properties:
+        customer_id:
+          type: string
+          description: Unique identifier for the customer
+          example: cust_12345
+        org_id:
+          type: string
+          description: Identifier for the organization associated with the customer
+          example: org_67890
+        customer_name:
+          type: string
+          description: Name of the customer or company
+          example: Acme Inc.
+        billing_emails:
+          type: array
+          description: List of email addresses that receive billing information
+          example:
+            - billing@acme.com
+            - finance@acme.com
+          items:
+            type: string
+            format: email
+        contract_type:
+          type: string
+          description: The type of contract associated with the customer
+          example: Enterprise
+        ou_id:
+          type: string
+          description: Organizational Unit (OU) identifier associated with the customer
+          example: ou_34567
+        parent:
+          type: string
+          description: Identifier for the parent organization, if applicable
+          example: parent_98765
+        created_at:
+          type: integer
+          description: Unix timestamp for when the customer was created
+          example: 1709645437
+        updated_at:
+          type: integer
+          description: Unix timestamp for when the customer was last updated
+          example: 1717594237
+    Contracts:
+      required:
+        - billing_provider
+        - contract_name
+        - contract_status
+        - contract_type
+        - cost_details
+        - limits
+      type: object
+      properties:
+        contract_id:
+          type: string
+          description: Unique identifier for the contract
+          example: cont_98765
+        contract_name:
+          type: string
+          description: Name of the contract
+          example: Basic Plan
+        contract_type:
+          type: string
+          description: The type of the contract
+          example: Upfront Commit
+        contract_status:
+          type: string
+          enum:
+            - ACTIVE
+            - INACTIVE
+            - UNDER_NEGOTIATION
+        billing_provider:
+          type: string
+          enum:
+            - STRIPE
+            - AWS_MARKETPLACE
+        cost_details:
+          type: object
+          properties:
+            currency:
+              type: string
+              enum:
+                - USD
+            total_cost:
+              type: number
+              format: double
+            cost_per_gb:
+              type: number
+              format: double
+            overage_cost_per_gb:
+              type: number
+              format: double
+        billing_cCycle_details:
+          type: object
+          properties:
+            billing_cycle:
+              type: string
+              enum:
+                - MONTHLY
+                - ANNUALLY
+            standard_term:
+              type: integer
+            term_notes:
+              type: string
+            starting_at:
+              type: integer
+              format: int64
+            ending_at:
+              type: integer
+              format: int64
+        limits:
+          type: object
+          properties:
+            monthly_log_ingestion:
+              type: integer
+              format: int64
+            retention_period:
+              type: string
+              enum:
+                - ONE_YEAR
+                - ONE_MONTH
+                - TWO_YEARS
+            fair_usage_ratio:
+              type: number
+              format: double
+        created_at:
+          type: integer
+          description: Unix timestamp for when the customer was created
+          example: 1709645437
+        updated_at:
+          type: integer
+          description: Unix timestamp for when the customer was last updated
+          example: 1717594237
+    Tag:
+      required:
+        - entity
+        - name
+        - value
+      type: object
+      properties:
+        name:
+          maxLength: 255
+          minLength: 1
+          type: string
+          description: The name of the tag, a tag name must be unique per entity.
+          example: environment
+        value:
+          maxLength: 255
+          minLength: 1
+          type: string
+          description: The value of the tag
+          example: production
+        entity:
+          $ref: '#/components/schemas/Entity'
+    DeleteTag:
+      required:
+        - entity
+        - name
+      type: object
+      properties:
+        name:
+          maxLength: 255
+          minLength: 1
+          type: string
+          description: The name of the tag
+          example: environment
+        entity:
+          $ref: '#/components/schemas/Entity'
+    Limit:
+      required:
+        - category
+        - scope
+        - target
+        - time_window
+        - unit
+        - value
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the limit
+        org_id:
+          type: string
+          description: Identifier for the organization
+        created_at:
+          type: integer
+          description: Unix timestamp for when the limit was created
+          format: int64
+        modified_at:
+          type: integer
+          description: Unix timestamp for when the limit was last modified
+          format: int64
+        category:
+          type: string
+          description: Category of the limit
+          enum:
+            - INGESTION_LIMITS
+        description:
+          type: string
+          description: Description of the limit
+        value:
+          minimum: 0
+          type: integer
+          description: Value of the limit
+          format: int64
+        unit:
+          type: string
+          description: Unit of measurement for the limit
+          enum:
+            - BYTES
+        target:
+          type: string
+          description: Target entity for the limit
+          example: TEAM
+          enum:
+            - TEAM
+            - ORGANISATION
+        scope:
+          type: object
+          properties:
+            organisation:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: Organisation ID
+              description: Organisation scope
+            tag:
+              type: object
+              description: Tag scope
+              example:
+                team: team_xxx
+                properties:
+                  key:
+                    type: string
+                    description: the key used to identify the tag
+                  value:
+                    type: string
+                    description: the value of the tag
+              anyOf:
+                - required:
+                    - team
+                  type: object
+          additionalProperties: false
+          description: Scope of the limit
+          anyOf:
+            - required:
+                - organisation
+              type: object
+            - required:
+                - tag
+              type: object
+        time_window:
+          type: string
+          description: Time window for the limit
+          enum:
+            - PER_MONTH
+    CreateLimitRequest:
+      required:
+        - category
+        - scope
+        - target
+        - time_window
+        - unit
+        - value
+      type: object
+      properties:
+        category:
+          type: string
+          description: Category of the limit
+          example: INGESTION_LIMITS
+          enum:
+            - INGESTION_LIMITS
+        description:
+          type: string
+          description: Description of the limit
+        value:
+          minimum: 0
+          type: integer
+          description: Value of the limit
+          format: int64
+        unit:
+          type: string
+          description: Unit of measurement for the limit
+          enum:
+            - BYTES
+        target:
+          type: string
+          description: Target entity for the limit
+          example: TEAM
+          enum:
+            - TEAM
+            - ORGANISATION
+        scope:
+          type: object
+          properties:
+            organisation:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: Organisation ID
+              description: Organisation scope
+            tag:
+              type: object
+              properties:
+                key:
+                  type: string
+                  description: the key used to identify the tag
+                value:
+                  type: string
+                  description: the value of the tag
+              description: Tag scope
+              example:
+                team: team_xxx
+              anyOf:
+                - required:
+                    - team
+                  type: object
+          additionalProperties: false
+          description: Scope of the limit
+          anyOf:
+            - required:
+                - organisation
+              type: object
+            - required:
+                - tag
+              type: object
+        time_window:
+          type: string
+          description: Time window for the limit
+          enum:
+            - PER_MONTH
+    UpdateLimitRequest:
+      required:
+        - category
+        - scope
+        - target
+        - time_window
+        - unit
+        - value
+      type: object
+      properties:
+        category:
+          type: string
+          description: Category of the limit
+          example: INGESTION_LIMITS
+          enum:
+            - INGESTION_LIMITS
+        description:
+          type: string
+          description: Description of the limit
+        value:
+          minimum: 0
+          type: integer
+          description: Value of the limit
+          format: int64
+        unit:
+          type: string
+          description: Unit of measurement for the limit
+          enum:
+            - BYTES
+        target:
+          type: string
+          description: Target entity for the limit
+          example: TEAM
+          enum:
+            - TEAM
+            - ORGANISATION
+        scope:
+          type: object
+          properties:
+            organisation:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: Organisation ID
+              description: Organisation scope
+            tag:
+              type: object
+              properties:
+                key:
+                  type: string
+                  description: the key used to identify the tag
+                value:
+                  type: string
+                  description: the value of the tag
+              description: Tag scope
+              example:
+                team: team_xxx
+              anyOf:
+                - required:
+                    - team
+                  type: object
+          additionalProperties: false
+          description: Scope of the limit
+          anyOf:
+            - required:
+                - organisation
+              type: object
+            - required:
+                - tag
+              type: object
+        time_window:
+          type: string
+          description: Time window for the limit
+          enum:
+            - PER_MONTH
+    Permission:
+      type: object
+      properties:
+        group_name:
+          type: string
+          description: The display name of the resource.
+        group_display_name:
+          type: string
+          description: Description of the resource.
+        permissions:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: The name of the permission
+              display_name:
+                type: string
+                description: The display name of the permission
+              description:
+                type: string
+                description: Description of the permission
+              type:
+                type: string
+                description: The type of permission (e.g., read, write, delete)
+              restricted:
+                type: boolean
+                description: Indicates if the permission is restricted
+    Tags:
+      type: object
+      additionalProperties:
+        type: string
+        description: The value of the tag
+      description: A map of key value pairs associated with this log
+      example:
+        region: eu
+        environment: production
+    GroupTimeSeries:
+      type: object
+      properties:
+        '@timestamp':
+          type: string
+          description: Unix timestamp in milliseconds
+          example: '1711535140632'
+        count:
+          type: integer
+          description: Count of the group key in the given time slice
+          format: int64
+          example: 40
+        value:
+          type: number
+          description: >-
+            The value of the statistical function for that group in the given
+            time slice
+          format: double
+          example: 35.625
+        quantiles:
+          type: object
+          description: >
+            Statistical distribution of the group’s values within the time
+            slice, represented by key quantiles:
+
+            - **min**: The minimum observed value.
+
+            - **p25**: The 25th percentile (first quartile).
+
+            - **p50**: The 50th percentile (median).
+
+            - **p75**: The 75th percentile (third quartile).
+
+            - **p90**: The 90th percentile.
+
+            - **p95**: The 95th percentile.
+
+            - **p99**: The 99th percentile.
+
+            - **p999**: The 99.9th percentile, highlighting extreme outliers.
+
+            - **max**: The maximum observed value.
+          example:
+            min: 691
+            p25: 713.75
+            p50: 796
+            p75: 847.5
+            p90: 1237
+            p95: 1331
+            p99: 1331
+            p999: 1331
+            max: 1331
+    Action:
+      required:
+        - type
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - EMAIL
+            - INTEGRATION
+        email:
+          maxLength: 255
+          minLength: 0
+          type: string
+        integration_id:
+          maxLength: 50
+          minLength: 0
+          type: string
+    Product:
+      required:
+        - active
+        - description
+        - name
+        - plan_limits
+        - product_id
+      type: object
+      properties:
+        product_id:
+          type: string
+          example: prod_QfgKLv7QiZadum
+        name:
+          type: string
+          description: The name of the product that the subscription is for.
+          example: ExamplePlan
+        description:
+          type: string
+          description: The description of the product that the subscription is for.
+          example: $ per GB per month
+        active:
+          type: boolean
+          description: >-
+            When false this product is discontinued and its not possible to
+            create new subscriptions for this product. Existing subscriptions
+            are unaffected.
+          example: true
+        plan_limits:
+          type: object
+          properties:
+            search_quota:
+              type: string
+              description: The allowable number of bytes that can be searched per month.
+              example: '100000'
+    TopKeysPerLog:
+      required:
+        - rank
+      type: object
+      properties:
+        rank:
+          type: integer
+          description: >-
+            A count representing the number of times this key was in the sampled
+            data.
+          example: 5
+        type:
+          type: string
+          description: A description of the type of data contained in the key.
+          enum:
+            - STRING
+            - NUMBER
+            - BOOLEAN
+        field_type:
+          type: string
+          description: A description of the source of the given key.
+          enum:
+            - Tags
+            - Message KVP
+        values:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/TopKeyValue'
+    SeriesItem:
+      type: object
+      additionalProperties:
+        type: string
+    GroupSeries:
+      type: object
+      properties:
+        group:
+          type: string
+          description: The group name
+          example: host
+        totalCount:
+          type: integer
+          description: The total count of the group
+          example: 112358
+        totalValue:
+          type: number
+          description: >-
+            The total statistical value of the group. For example the average
+            latency in milliseconds.
+          example: 1.891
+        series:
+          type: array
+          items:
+            $ref: '#/components/schemas/Series'
+    MetricDelta:
+      type: object
+      properties:
+        start_time:
+          type: integer
+          description: The starting unix time in milliseconds of the previous period.
+        end_time:
+          type: integer
+          description: The ending unix time in milliseconds of the previous period.
+        total_count:
+          type: integer
+          description: The total number of data points in the previous period.
+        total_value:
+          type: number
+          description: The total value of the previous period.
+          format: double
+        delta_value:
+          type: number
+          description: >-
+            The computed difference between the current and previous total
+            values.
+          format: double
+        delta_factor:
+          type: number
+          description: The relative change between the current and previous total values.
+          format: double
+      description: >
+        Contains information about the change in a metric between a specified
+        time range  and the immediately preceding time range. For example: - If
+        the specified time range is the last 7 days, the delta is calculated
+        based on the previous 7 days. - If the specified time range is the last
+        20 minutes, the delta is calculated based on the previous 20 minutes.
+    Meta:
+      required:
+        - dashboard_id
+        - from_timestamp
+        - org_id
+        - to_timestamp
+      type: object
+      properties:
+        org_id:
+          type: string
+          description: The organisation ID
+          format: uuid
+        dashboard_id:
+          type: string
+          description: The dashboard ID
+          example: 123af2
+        from_timestamp:
+          type: integer
+          description: The starting time of the period covered by the dashboard
+          example: 1709251200000
+        to_timestamp:
+          type: integer
+          description: The ending time of the period covered by the dashboard
+          example: 1711390455601
+    SearchDetails:
+      type: object
+      properties:
+        from:
+          minItems: 1
+          uniqueItems: true
+          type: string
+          description: The ids of the logs to search.
+          example: 550e8400-e29b-41d4-a716-446655440000
+        time_range:
+          type: string
+          description: >
+            The relative time range for which to query data. Time range
+            supported is from milliseconds to years. For an exact range, use
+            `from_ts` and `to_ts` instead.
+          example: Last 3 weeks
+        from_ts:
+          type: integer
+          description: >-
+            The starting time (unix time in milliseconds) for which to query
+            data. Must be used together with `to_ts`. This parameter is not to
+            be used when using `time_range`.
+          example: 1709251200000
+        to_ts:
+          type: integer
+          description: >-
+            The ending time (unix time in milliseconds) for which to query data.
+            Must be used together with `from_ts`. This parameter is incompatible
+            with `time_range`.
+          example: 1711390455601
+        where:
+          type: string
+          description: >-
+            The where parameter is used to filter the results of your query. 
+            See https://docs.bronto.io/core-features/log-search/query-syntax for
+            more details The filter can combine multiple terms using AND, OR,
+            NOT.
+          example: ip=10.0.0.1
+        select:
+          type: string
+          description: >-
+            The select parameter selects values of one or more specified keys
+            and can be  considered to be equivalent to returning columns from a
+            table.  It can select keys either by name, e.g. query params with
+            select=ip_address or with  an aggregate function (count, max, min,
+            avg, sum) on the values of the specified key,  e.g. query params
+            with select=count(ip_address). Multiple selects can be used and they
+            would separated by & in the query param,  e.g.
+            &select=count(ip_address)&select=count(hostname).  The following
+            internal columns are always available\: @time, @origin & @raw
+          example: message
+    SsoMapping:
+      required:
+        - assign_attr
+        - provider_key
+        - provider_value
+      type: object
+      properties:
+        provider_key:
+          type: string
+          description: The identity provider key to retrieve the value from
+          example: member_of
+        provider_value:
+          type: string
+          description: The identify provider value to map from
+          example: Developers
+        assign_attr:
+          type: string
+          description: The Bronto role or group to map to
+          example: Standard
+    ExportDetails:
+      type: object
+      properties:
+        from:
+          type: string
+          description: The ids of the logs to search separated by a colon (:).
+          example: >-
+            550e8400-e29b-41d4-a716-446655440000:297bb888-83b1-44e0-8ab6-47879f1275a2
+        time_range:
+          type: string
+          description: >
+            The relative time range for which to query data. Time range
+            supported is from milliseconds to years. For an exact range, use
+            `from_ts` and `to_ts` instead.
+          example: Last 3 weeks
+        timeRange:
+          type: string
+          description: >
+            The relative time range for which to query data. Time range
+            supported is from milliseconds to years. For an exact range, use
+            `from_ts` and `to_ts` instead.
+          example: Last 3 weeks
+          deprecated: true
+        fromTs:
+          description: >
+            The starting time (unix time in milliseconds) for which to query
+            data. Must be used together with `to_ts`. This parameter is not to
+            be used when using `time_range`.
+          deprecated: true
+          oneOf:
+            - type: integer
+              format: int64
+              example: 1709251200000
+            - type: string
+              example: '1709251200000'
+              deprecated: true
+        from_ts:
+          description: >
+            The starting time (unix time in milliseconds) for which to query
+            data. Must be used together with `to_ts`. This parameter is not to
+            be used when using `time_range`.
+          oneOf:
+            - type: integer
+              format: int64
+              example: 1709251200000
+            - type: string
+              example: '1709251200000'
+              deprecated: true
+        toTs:
+          description: >
+            The ending time (unix time in milliseconds) for which to query data.
+            Must be used together with `from_ts`. This parameter is incompatible
+            with `time_range`.
+          deprecated: true
+          oneOf:
+            - type: integer
+              format: int64
+              example: 1711390455601
+            - type: string
+              example: '1711390455601'
+              deprecated: true
+        to_ts:
+          description: >
+            The ending time (unix time in milliseconds) for which to query data.
+            Must be used together with `from_ts`. This parameter is incompatible
+            with `time_range`.
+          oneOf:
+            - type: integer
+              format: int64
+              example: 1711390455601
+            - type: string
+              example: '1711390455601'
+              deprecated: true
+        where:
+          type: string
+          description: >
+            The where parameter is used to filter the results of your query. 
+            See https://docs.bronto.io/core-features/log-search/query-syntax for
+            more details The filter can combine multiple terms using AND, OR,
+            NOT.
+          example: ip=10.0.0.1
+      oneOf:
+        - required:
+            - from
+            - fromTs
+            - toTs
+            - where
+          type: object
+        - required:
+            - from
+            - from_ts
+            - to_ts
+            - where
+          type: object
+        - required:
+            - from
+            - time_range
+            - where
+          type: object
+        - required:
+            - from
+            - timeRange
+            - where
+          type: object
+    Entity:
+      required:
+        - id
+        - type
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the entity
+          format: uuid
+        type:
+          type: string
+          description: The type of the entity e.g. log
+          enum:
+            - log
+            - dashboard
+            - user
+            - api_key
+            - widget
+    TopKeyValue:
+      type: object
+      properties:
+        value:
+          type: string
+          description: A value associated with the key.
+        rank:
+          type: integer
+          description: >-
+            A count representing the number of times a value occurred for the
+            key.
+    Series:
+      type: object
+      properties:
+        '@timestamp':
+          type: integer
+          description: Unix timestamp in milliseconds
+          example: 1711535140632
+        count:
+          type: integer
+          description: The number of events to compute the value
+        value:
+          type: number
+          description: The statistical value
+  headers:
+    RateLimitLimit:
+      description: The request limit per time window.
+      schema:
+        type: integer
+      example: 20
+    RateLimitRemaining:
+      description: The number of requests left in the current time window.
+      schema:
+        type: integer
+      example: 12
+    RateLimitReset:
+      description: The number of seconds left in the current time window.
+      schema:
+        type: integer
+      example: 13
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      name: X-BRONTO-API-KEY
+      in: header
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

@@ -1,0 +1,24 @@
+---
+title: "AWS CloudFront"
+description: "This guide describes how logs delivered by AWS CloudFront can be forwarded to Bronto."
+---
+
+## Amazon Web Services CloudFront
+
+### Overview
+
+ AWS CloudFront delivers logs to AWS S3, and Bronto's Log Forwarder can be used to forward those logs to Bronto.
+
+### How it works
+
+Bronto's AWS Log Forwarder solution consists primarily of a Lambda function which retrieves log data and forwards it to Bronto. This function is triggered via an S3 notification.
+
+### Resources
+
+For Terraform users, Bronto provides a module that sets up the forwarding Lambda, as well as the required IAM roles and policies. The configuration supports forwarding different log sources to different destinations in Bronto. Details and usage of the Terraform module for Bronto log forwarding can be found in [this GitHub repository](https://github.com/logchatio/brontobytes-aws-ingestion-terraform).
+
+For non-Terraform users, the Lambda forwarder code and packaged artifact can also be found in [this other GitHub repository](https://github.com/logchatio/brontobytes-aws-ingestion-python).
+
+Finally, material on how to setup [S3 notifications](https://docs.aws.amazon.com/AmazonS3/latest/userguide/enable-event-notifications.html) can be found on AWS documentation.
+
+As always, if you need help or have any questions, please feel free to contact us at [support@bronto.io](mailto:support@bronto.io).

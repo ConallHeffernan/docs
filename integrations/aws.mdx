@@ -1,0 +1,149 @@
+---
+title: "AWS S3 Access Log"
+description: "This guide will walk you through the steps to set up the [AWS integration](/integrations/aws-cloud) in Bronto."
+---
+
+### Overview
+
+Please note this In-App option is for S3 Access Log ingestion only, for all other use cases refer to our Client Side option.
+
+To set up the AWS integration manually, create an IAM policy and IAM role in your AWS account, and configure the role with an AWS External ID generated in your Bronto account. This allows Bronto’s AWS account to query AWS APIs on your behalf, and pull data into your Bronto account. The sections below detail the steps for creating each of these components, and then completing the setup in your Bronto account.
+
+### Setup
+
+<Steps>
+<Step title="Generate an AWS External ID">
+ In the [AWS integration configuration page](/integrations/aws-cloud), click the “Add New AWS Account” button.
+</Step>
+<Step>
+ Enter your AWS account ID in the “AWS Account ID” field and click "Generate External ID". The ID will be generated and available for you to copy. For more information on AWS External IDs\*\*, \*\*see the [IAM user guide](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html).
+</Step>
+
+
+<Step title="AWS IAM role for Bronto">
+ Create a new role in the AWS [IAM Console](https://console.aws.amazon.com/iam/home#/roles).
+</Step>
+<Step>
+ Select **Custom trust policy** for the trusted entity type and paste the [trust policy](#aws-integration-iam-custom-trust-policy) below. (**Note:** don’t forget to copy in your External ID generated on the [integration page](/integrations/aws-cloud))
+</Step>
+<Step>
+ Skip the permission policy section as it will be created after the role.
+</Step>
+<Step>
+ Name the role `BrontoBytesIntegration-AWSRole`, and provide an apt description.
+</Step>
+<Step>
+ Click **Create Role**.
+</Step>
+
+
+
+<Step title="AWS IAM policy for Bronto">
+
+Create an IAM policy for the BrontoBytes role in your AWS account with the necessary permissions to take advantage of every AWS integration offered by BrontoBytes. As other components are added to an integration, these permissions may change.
+
+ Go to the newly created `BrontoBytesIntegration-AWSRole` role in the [AWS IAM Console](https://console.aws.amazon.com/iam/home#/roles).
+</Step>
+<Step>
+ Click `Add Permissions` and choose `Create inline policy`.
+</Step>
+<Step>
+ Paste the [BrontoBytes Integration Policy](#brontobytes-integration-policy) below.
+</Step>
+<Step>
+ Click **Next** to review your changes.
+</Step>
+<Step>
+ Name the policy `BrontoBytesIntegrationPolicy` or one of your own choosing, and provide an apt description.
+</Step>
+<Step>
+ Click **Create policy**.
+</Step>
+
+<Step title="AWS IAM Permissions">
+
+AWS IAM permissions enable Bronto to collect metrics, tags, EventBridge events, and other data necessary to monitor your AWS environment.
+
+To correctly set up the AWS Integration, you must attach the relevant IAM policies to the Bronto AWS Integration IAM Role in your AWS account.
+
+### AWS Integration IAM Custom Trust Policy
+
+Don’t forget to copy in your External ID generated on the integration page
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "BrontoBytesAssumeRole",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::637423326566:role/BrontoBytesAWSIntegration"
+            },
+            "Action": "sts:AssumeRole",
+            "Condition": {
+                "StringEquals": {
+                    "sts:ExternalId": "<External ID created in your BrontoBytes account>"
+                }
+            }
+        }
+    ]
+}
+```
+
+### Bronto Integration Policy
+
+The below config needs to be updated first before pasting. *BUCKET\_NAME*is the name of the S3 bucket that contains the log data and *PREFIX* is the path to the parent folder where the logs are actually stored.
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "s3:List*",
+                "s3:Get*"
+            ],
+            "Effect": "Allow",
+            "Resource": [
+                "arn:aws:s3:::<BUCKET_NAME>/<PREFIX>/*",
+                "arn:aws:s3:::<BUCKET_NAME>"
+            ]
+        }
+    ]
+}
+
+```
+
+### S3 Notifications
+
+The final step is to enable notifications for your S3 bucket. This will allow Bronto to receive notifications when new objects are added to your bucket.
+
+ Go to the [S3 console](https://console.aws.amazon.com/s3/home) and find the bucket you want to enable notifications for.
+</Step>
+<Step>
+ Choose the `Properties` tab and scroll down to `Event notifications`
+</Step>
+<Step>
+ Click **Create event notification**
+</Step>
+<Step>
+ Set the event type to `All object create events`
+</Step>
+<Step>
+ Set the destination to `SNS Topic` and enter ARN that matches the region where your bucket is:
+
+
+* ****EU West 1****
+
+  ```
+  arn:aws:sns:eu-west-1:637423326566:brontobytes-aws-ingestion
+  ```
+
+* ****US East 1****
+
+  ```
+  arn:aws:sns:us-east-1:637423326566:brontobytes-aws-ingestion
+  ```
+</Step>
+</Steps>

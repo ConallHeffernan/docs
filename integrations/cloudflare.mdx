@@ -1,0 +1,83 @@
+---
+title: "Cloudflare"
+description: "Cloudflare provides a feature named Logpush that enables logs to be forwarded to 3rd party logging solutions. Logs are delivered near realtime in small batches."
+---
+
+<Warning>
+  This feature is only available with an enterprise plan or by subscribing to a paid workers plan.
+</Warning>
+
+## Bronto API Key
+
+First an API key is required in order to be able to successfully ingest data into Bronto. To generate an API key in Bronto, please refer to the [API Keys documentation](/manage/manage-api-keys).
+
+## Cloudflare API Key
+
+A Cloudflare API key is also required for the setup, a global API key can be used or alternatively a custom API token with Logs:Edit permissions can be created.
+
+<Note>
+  Bronto will not see the Cloudflare API Key or Token.
+</Note>
+
+<Frame>
+<img src="/images/integrations/assets/images/cloudflare-configuration-857137d06d1e05925a07e62a705dcc39.png"/>
+</Frame>
+
+## Cloudflare Logging Configuration
+
+Management of HTTP destinations is via a REST API, the full API docs can be found [here](https://developers.cloudflare.com/logs/get-started/api-configuration/). Once a new logging endpoint is created, it's visible in the Cloudflare UI under `Analytics & Logs` <Icon name="arrow-right" iconType="solid" /> `Logpush`.
+
+<Frame>
+<img src="/images/integrations/assets/images/cloudflare-api-token-54d442a12408376a79e0c9d54af44ec1.png"/>
+</Frame>
+
+To create a new Logpush job to forward logs to Bronto, make the follow `curl` request:
+
+
+
+```bash Create Logpush Job
+curl --request POST \
+   --url https://api.cloudflare.com/client/v4/accounts/<YOUR_CLOUDFLARE_ACCOUNT_ID>/logpush/jobs \
+   --header 'Content-Type: application/json' \
+   --header 'X-Auth-Email: <YOUR_CLOUDFLARE_EMAIL>' \
+   --header 'X-Auth-Key: <YOUR_CLOUDFLARE_API_KEY>' \
+   --data '{
+   "dataset": "workers_trace_events",
+ "destination_conf": "https://ingestion.eu.bronto.io/?header_x-bronto-api-key=<YOUR_API_KEY>&service_namespace=<YOUR_NAMESPACE_NAME>&service_name=<YOUR_SERVICE_NAME>",
+   "enabled": true,
+   "output_options": {
+    "field_delimiter": ",",
+     "batch_prefix": "",
+     "batch_suffix": "",
+     "CVE-2021-44228": false,
+     "field_names": [
+       "DispatchNamespace",
+       "Entrypoint",
+       "Event",
+       "EventTimestampMs",
+       "EventType",
+       "Exceptions",
+       "Logs",
+       "Outcome",
+       "ScriptName",
+       "ScriptTags",
+       "ScriptVersion"
+     ],
+     "output_type": "ndjson",
+     "sample_rate": 1,
+     "timestamp_format": "unixnano"
+   }
+ }'
+```
+
+To verify a Logpush job has been created, make the following `curl` request:
+
+
+
+```bash View Logpush Jobs
+curl --request GET \
+   --url https://api.cloudflare.com/client/v4/accounts/<YOUR_CLOUDFLARE_ACCOUNT_ID>/logpush/jobs \
+   --header 'Content-Type: application/json' \
+   --header 'X-Auth-Email: <YOUR_CLOUDFLARE_EMAIL>' \
+   --header 'X-Auth-Key: <YOUR_CLOUDFLARE_API_KEY>'
+```

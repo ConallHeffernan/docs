@@ -1,0 +1,119 @@
+---
+title: "Azure Forwarder"
+description: "This guide explains how to forward Azure logs to Bronto using Azure Event Hub and the Bronto log forwarder."
+---
+
+## Bronto Log Forwarder for Azure
+
+### How it works
+
+The Bronto log forwarder for Azure is built around a Function App that collects log data from Azure Event Hub and sends it to Bronto.
+
+### Steps
+<Steps>
+<Step>
+ Set Up Event Hub Infrastructure Using Our Terraform Module: This will automatically create and configure relevant resources (e.g. Event Hub, Function App, etc), using the details from the configurations below. The creation of an Event Hub is optional with the module, to accommodate for cases where such an Event Hub would already be in place.
+</Step>
+<Step>
+ Stream Events from Azure services or resources to Event Hub: Using the Diagnostic setting, you can configure each Azure resource to stream certain events to an event hub: [Azure steps to stream logs to an event hub.](https://learn.microsoft.com/en-us/entra/identity/monitoring-health/howto-stream-logs-to-event-hub?tabs=splunk#stream-logs-to-an-event-hub)
+</Step>
+<Step>
+ Verifying Log Data in Bronto: Once the relevant data is generated in Azure and streamed to Event Hub, shortly log events will appear in the Bronto UI. These logs will be displayed in the appropriate datasets which will be automatically created at ingestion time.
+</Step>
+</Steps>
+
+### Resources
+
+For Terraform users, Bronto offers a module that simplifies the setup of the forwarding Function App and its associated Event Hub resources. You can access the module source at [this URL](https://releases.bronto.io/integrations/azure/terraform/1.0.1/brontoForwarder.zip).
+
+Below is an example of how to use the Terraform module for Bronto log forwarding. This example assumes that a Resource Group, Event Hub, and all necessary resources for deploying the Bronto Function App will be created.
+
+```
+module "forwarder" {
+  source = "https://releases.bronto.io/integrations/azure/terraform/latest/brontoForwarder.zip"
+  location  = "canadacentral"
+  resource_group = {
+    create = true
+    name   = "brontoforwarder"
+  }
+  eventhub  = {
+    create = true
+    name = "brontoforwarder"
+    namespace = {
+      name = "brontoforwarder"
+      sku  = "Basic"
+    }
+    retention_days = 1
+  }
+  forwarder = {
+    name = "brontoforwarder"
+    service_plan_type = "Y1"
+    storage_account = {
+      name             = "brontoforwarder"
+      replication_type = "LRS"
+      tier             = "Standard"
+    }
+    bronto_config = {
+      ingestion_endpoint = "https://ingestion.eu.staging.bronto.io"
+      ingestion_key      = data.aws_kms_secrets.secrets.plaintext["bronto_ingestion_key"]
+      default_collection = "azure"
+    }
+  }
+}
+```
+
+If an Event Hub for receiving log data is already configured in your environment, you can create only the resources related to the forwarding Bronto Function App using a configuration like the one below (not `create = false`):
+
+```
+module "forwarder" {
+  source    = "https://releases.bronto.io/integrations/azure/terraform/latest/brontoForwarder.zip"
+  location  = "canadacentral"
+  resource_group = {
+    create = false
+    name   = "brontoforwarder"
+  }
+  eventhub  = {
+    create    = false
+    name      = var.eventhub.name
+    namespace = var.eventhub.namespace
+  }
+  forwarder = {
+    name              = "brontoforwarder"
+    service_plan_type = "Y1"
+    storage_account = {
+      name             = "brontoforwarder"
+      replication_type = "LRS"
+      tier             = "Standard"
+    }
+    bronto_config = {
+      ingestion_endpoint = "https://ingestion.eu.staging.bronto.io"
+      ingestion_key      = data.aws_kms_secrets.secrets.plaintext["bronto_ingestion_key"]
+      default_collection = "azure"
+    }
+  }
+}
+```
+
+For those not using Terraform, the Function App forwarder artifact is available for download at [this URL](https://releases.bronto.io/integrations/azure/forwarders/eventhub/latest/brontoForwarder.zip).
+
+### Troubleshooting
+
+### Ensure and verify log events are being sent to the event hub.
+
+* Navigate to Event Hubs on Azure.
+* Search for the event hub created earlier. Here you will see an overview table for this event hub and metrics on messages being received broken down by incoming and and outgoing messages.
+* If this is empty please ensure that events are being streamed to the correct event hub.
+* If metrics show that data goes in and out of event hub and yet you do not see data in Bronto, please check your ingestion endpoint and region is correct (US, EU) and that your Bronto API key set as environment variables on the Function App are correct.
+
+### Notes on event categorisation
+
+When ingesting log data, Bronto automatically assigns it to a collection and dataset based on the information received with the payload. Azure logs forwarded through the Bronto integration are, by default, assigned to the unknown\_service dataset within the azure collection.
+
+However, the following log types are automatically assigned to more specific collections and datasets:
+
+* Activity Logs
+* Function App Logs
+* Entra ID Logs
+* Network Security Perimeter Logs
+
+If you are forwarding a log type that is not listed above and would like it assigned to a specific collection and dataset, please contact us at [support@bronto.io](mailto:support@bronto.io).

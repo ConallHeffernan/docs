@@ -1,101 +1,143 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "Bronto",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#f9c337",
+    "light": "#f9c337",
+    "dark": "#f9c337"
   },
-  "favicon": "/favicon.svg",
+  "logo":{
+    "dark": "/logo/white.png",
+    "light": "/logo/black.png",
+    "href": "https://www.bronto.io"
+  },
+  "favicon": "/favicon.png",
+  "fonts": {
+    "heading": {
+      "family": "Montserrat"
+    },
+    "body": {
+      "family": "Montserrat"
+    }
+  },
+  "background": {
+    "color": {
+      "dark": "#011138",
+      "light": "#F4F3ED"
+    }
+  },
+  "styling": {
+    "codeblocks": "system"
+  },
+  "appearance": {
+    "default": "dark"
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Docs",
         "groups": [
           {
-            "group": "Get Started",
+            "group": "Getting Started",
             "pages": [
-              "introduction",
-              "quickstart",
-              "development"
+              "introduction"
+            ],
+            "icon":"rocket"
+          },
+          {
+            "group": "Send Data",
+            "icon":"upload",
+            "pages": [
+              "getting-started/quick-ingestion",
+              "integrations/cloudflare",
+              "integrations/fastly",
+              {
+                "group": "AWS",
+                "pages": [
+                  "integrations/aws",
+                  "integrations/aws-client"
+                ]
+              },
+              "integrations/azure-client"
             ]
           },
           {
-            "group": "Essentials",
+            "group": "Monitors and Alerting",
+            "icon":"bell",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/settings",
-              "essentials/navigation",
-              "essentials/reusable-snippets"
+              "core-features/monitors"
             ]
           }
         ]
       },
       {
-        "tab": "API Reference",
+        "tab": "API",
         "groups": [
           {
-            "group": "API Documentation",
-            "pages": [
-              "api-reference/introduction"
-            ]
+            "group": " ",
+            "pages": ["api-reference/introduction"]
           },
           {
-            "group": "Endpoint Examples",
+            "group": "api-keys",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete"
-            ]
-          }
-        ]
-      }
-    ],
-    "global": {
+                "api-reference/api-keys/overview",
+                "api-reference/api-keys/retrieve-a-list-of-api-keys",
+                "api-reference/api-keys/create-a-new-api-key",
+                "api-reference/api-keys/delete-an-api-key",
+                "api-reference/api-keys/update-an-api-key"
+              ]
+            },
+            {
+              "group": "users",
+              "pages": [
+                "api-reference/users/overview",
+                "api-reference/users/retrieve-a-list-of-users",
+                "api-reference/users/create-a-new-user",
+                "api-reference/users/get-a-single-user-by-id",
+                "api-reference/users/delete-a-user-by-id",
+                "api-reference/users/updates-a-user"
+              ]
+            }
+          ]
+        }
+      ],
+      "global": {
       "anchors": [
         {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
+          "anchor": "About Us",
+          "href": "https://www.bronto.io/about",
+          "icon": "circle-info"
         },
         {
-          "anchor": "Community",
-          "href": "https://mintlify.com/community",
-          "icon": "slack"
+          "anchor": "Status",
+          "href": "https://status.brontobytes.io",
+          "icon": "signal"
         },
         {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
+          "anchor": "Contact Us",
+          "href": "https://www.bronto.io/contact",
+          "icon": "headphones"
         }
       ]
     }
   },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
   "navbar": {
     "links": [
       {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "label": "Sign in",
+        "href": "https://app.bronto.io/login"
       }
     ],
     "primary": {
       "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "label": "Book a demo",
+      "href": "https://www.bronto.io/book-a-demo"
     }
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "linkedin": "https://www.linkedin.com/company/brontohq"
     }
   }
 }
