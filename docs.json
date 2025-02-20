@@ -105,19 +105,19 @@
       "global": {
       "anchors": [
         {
-          "anchor": "About Us",
-          "href": "https://www.bronto.io/about",
+          "anchor": "Support",
+          "href": "https://www.bronto.io/contact",
+          "icon": "headphones"
+        },
+        {
+          "anchor": "Book a Demo",
+          "href": "https://www.bronto.io/book-a-demo",
           "icon": "circle-info"
         },
         {
           "anchor": "Status",
           "href": "https://status.brontobytes.io",
           "icon": "signal"
-        },
-        {
-          "anchor": "Contact Us",
-          "href": "https://www.bronto.io/contact",
-          "icon": "headphones"
         }
       ]
     }
@@ -125,13 +125,13 @@
   "navbar": {
     "links": [
       {
-        "label": "Sign in",
+        "label": "Login",
         "href": "https://app.bronto.io/login"
       }
     ],
     "primary": {
       "type": "button",
-      "label": "Book a demo",
+      "label": "Book demo",
       "href": "https://www.bronto.io/book-a-demo"
     }
   },
