@@ -35,6 +35,15 @@
   },
   "navigation": {
     "tabs": [
+        {
+        "tab": "Welcome",
+        "groups": [
+          {
+            "group": " ",
+            "pages": ["welcome"]
+          }
+          ]
+        },
       {
         "tab": "Documentation",
         "groups": [
@@ -99,15 +108,6 @@
                 "api-reference/users/updates-a-user"
               ]
             }
-          ]
-        },
-        {
-        "tab": "Welcome",
-        "groups": [
-          {
-            "group": " ",
-            "pages": ["welcome"]
-          }
           ]
         }
       ],
