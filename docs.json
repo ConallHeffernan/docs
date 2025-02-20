@@ -3,9 +3,9 @@
   "theme": "mint",
   "name": "Bronto",
   "colors": {
-    "primary": "#f9c337",
-    "light": "#f9c337",
-    "dark": "#f9c337"
+    "primary": "#000000",
+    "light": "#000000",
+    "dark": "#000000"
   },
   "logo":{
     "dark": "/logo/white.png",
